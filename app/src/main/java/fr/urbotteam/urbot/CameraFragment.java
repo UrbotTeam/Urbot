@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-
 public class CameraFragment extends Fragment
 {
     /**
@@ -371,6 +370,8 @@ public class CameraFragment extends Fragment
         configureTransform(width, height);
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
+
+
         try {
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
