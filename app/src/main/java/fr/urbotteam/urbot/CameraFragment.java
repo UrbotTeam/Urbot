@@ -234,6 +234,7 @@ public class CameraFragment extends Fragment
     private class GraphicFaceTrackerFactory implements MultiProcessor.Factory<Face> {
         @Override
         public Tracker<Face> create(Face face) {
+            showToast("Test");
             return null;
         }
     }
