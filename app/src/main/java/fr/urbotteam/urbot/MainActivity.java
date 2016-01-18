@@ -12,7 +12,7 @@ public class MainActivity extends Activity {
 
         if (null == savedInstanceState) {
             getFragmentManager().beginTransaction()
-                    .replace(R.id.container, CameraFragment.newInstance(getApplicationContext()))
+                    .replace(R.id.container, CameraFragment.newInstance())
                     .commit();
         }
     }

@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.os.Bundle;
@@ -31,6 +32,8 @@ public class CameraFragment extends Fragment
 {
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
+    private GraphicOverlay mGraphicOverlay;
+
     private static final int RC_HANDLE_GMS = 9001;
     // permission request codes need to be < 256
     private static final int RC_HANDLE_CAMERA_PERM = 2;
@@ -53,7 +56,6 @@ public class CameraFragment extends Fragment
      */
     private static final String TAG = "Camera2Fragment";
 
-    private Context mContext;
 
     /**
      * Shows a {@link Toast} on the UI thread.
@@ -72,14 +74,8 @@ public class CameraFragment extends Fragment
         }
     }
 
-
-    private CameraFragment(Context context)
-    {
-        mContext = context;
-    }
-
-    public static CameraFragment newInstance(Context context) {
-        return new CameraFragment(context);
+    public static CameraFragment newInstance() {
+        return new CameraFragment();
     }
 
     @Override
@@ -94,6 +90,70 @@ public class CameraFragment extends Fragment
         return inflater.inflate(R.layout.fragment_camera, container, false);
     }
 
+    @Override
+    public void onViewCreated(final View view, Bundle savedInstanceState) {
+        try
+        {
+            mPreview = (CameraSourcePreview) view.findViewById(R.id.preview);
+            mGraphicOverlay = (GraphicOverlay) view.findViewById(R.id.faceOverlay);
+        }
+        catch (ClassCastException e)
+        {
+            Log.e(TAG, "onViewCreated Cast exception");
+            e.printStackTrace();
+        }
+        catch (Exception e)
+        {
+            Log.e(TAG, "onViewCreated Unknown exception");
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * Initializes the UI and initiates the creation of a face detector.
+     */
+    @Override
+    public void onCreate(Bundle icicle) {
+        super.onCreate(icicle);
+
+        // Check for the camera permission before accessing the camera.  If the
+        // permission is not granted yet, request permission.
+        int rc = ActivityCompat.checkSelfPermission(this.getActivity(), Manifest.permission.CAMERA);
+        if (rc == PackageManager.PERMISSION_GRANTED) {
+            createCameraSource();
+        } else {
+            requestCameraPermission();
+        }
+    }
+
+    /**
+     * Handles the requesting of the camera permission.  This includes
+     * showing a "Snackbar" message of why the permission is needed then
+     * sending the request.
+     */
+    private void requestCameraPermission() {
+        Log.w(TAG, "Camera permission is not granted. Requesting permission");
+
+        final String[] permissions = new String[]{Manifest.permission.CAMERA};
+
+        if (!ActivityCompat.shouldShowRequestPermissionRationale(this.getActivity(),
+                Manifest.permission.CAMERA)) {
+            ActivityCompat.requestPermissions(this.getActivity(), permissions, RC_HANDLE_CAMERA_PERM);
+            return;
+        }
+
+        final Activity thisActivity = this.getActivity();
+
+        View.OnClickListener listener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ActivityCompat.requestPermissions(thisActivity, permissions,
+                        RC_HANDLE_CAMERA_PERM);
+            }
+        };
+    }
+
     /**
      * Creates and starts the camera.  Note that this uses a higher resolution in comparison
      * to other detection examples to enable the barcode detector to detect small barcodes
@@ -101,7 +161,8 @@ public class CameraFragment extends Fragment
      */
     private void createCameraSource() {
 
-        FaceDetector detector = new FaceDetector.Builder(mContext)
+        Context context = getActivity().getApplicationContext();
+        FaceDetector detector = new FaceDetector.Builder(context)
                 .setClassificationType(FaceDetector.ALL_CLASSIFICATIONS)
                 .build();
 
@@ -121,50 +182,33 @@ public class CameraFragment extends Fragment
             Log.w(TAG, "Face detector dependencies are not yet available.");
         }
 
-        Activity activity = getActivity();
         Point displaySize = new Point();
-        activity.getWindowManager().getDefaultDisplay().getSize(displaySize);
+        getActivity().getWindowManager().getDefaultDisplay().getSize(displaySize);
 
-        mCameraSource = new CameraSource.Builder(mContext, detector)
+        mCameraSource = new CameraSource.Builder(context, detector)
                 .setRequestedPreviewSize(displaySize.x, displaySize.y)
                 .setFacing(CameraSource.CAMERA_FACING_FRONT)
                 .setRequestedFps(30.0f)
                 .build();
     }
 
-    @Override
-    public void onViewCreated(final View view, Bundle savedInstanceState) {
-        try
-        {
-            mPreview = (CameraSourcePreview) view.findViewById(R.id.preview);
-        }
-        catch (ClassCastException e)
-        {
-            Log.e(TAG, "onViewCreated Cast exception");
-            e.printStackTrace();
-        }
-        catch (Exception e)
-        {
-            Log.e(TAG, "onViewCreated Unknown exception");
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-
+    /**
+     * Restarts the camera.
+     */
     @Override
     public void onResume() {
         super.onResume();
+
         startCameraSource();
     }
 
+    /**
+     * Stops the camera.
+     */
     @Override
     public void onPause() {
-        mPreview.stop();
         super.onPause();
+        mPreview.stop();
     }
 
     /**
@@ -179,20 +223,48 @@ public class CameraFragment extends Fragment
         }
     }
 
+    /**
+     * Callback for the result from requesting permissions. This method
+     * is invoked for every call on {@link #requestPermissions(String[], int)}.
+     * <p>
+     * <strong>Note:</strong> It is possible that the permissions request interaction
+     * with the user is interrupted. In this case you will receive empty permissions
+     * and results arrays which should be treated as a cancellation.
+     * </p>
+     *
+     * @param requestCode  The request code passed in {@link #requestPermissions(String[], int)}.
+     * @param permissions  The requested permissions. Never null.
+     * @param grantResults The grant results for the corresponding permissions
+     *                     which is either {@link PackageManager#PERMISSION_GRANTED}
+     *                     or {@link PackageManager#PERMISSION_DENIED}. Never null.
+     * @see #requestPermissions(String[], int)
+     */
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                           int[] grantResults) {
-        if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            if (grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Log.e(TAG, "onRequestPermissionsResult : No permissions granted");
-            }
-        } else {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode != RC_HANDLE_CAMERA_PERM) {
+            Log.d(TAG, "Got unexpected permission result: " + requestCode);
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            return;
         }
+
+        if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, "Camera permission granted - initialize the camera source");
+            // we have permission, so create the camerasource
+            createCameraSource();
+            return;
+        }
+
+        Log.e(TAG, "Permission not granted: results len = " + grantResults.length +
+                " Result code = " + (grantResults.length > 0 ? grantResults[0] : "(empty)"));
+
+        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                getActivity().finish();
+            }
+        };
     }
 
-
-    //==============================================================================================
+//==============================================================================================
     // Camera Source Preview
     //==============================================================================================
 
@@ -205,16 +277,16 @@ public class CameraFragment extends Fragment
 
         // check that the device has play services available.
         int code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(
-                mContext);
+                getActivity().getApplicationContext());
         if (code != ConnectionResult.SUCCESS) {
             Dialog dlg =
-                    GoogleApiAvailability.getInstance().getErrorDialog(getActivity(), code, RC_HANDLE_GMS);
+                    GoogleApiAvailability.getInstance().getErrorDialog(this.getActivity(), code, RC_HANDLE_GMS);
             dlg.show();
         }
 
         if (mCameraSource != null) {
             try {
-                mPreview.start(mCameraSource);
+                mPreview.start(mCameraSource, mGraphicOverlay);
             } catch (IOException e) {
                 Log.e(TAG, "Unable to start camera source.", e);
                 mCameraSource.release();
@@ -234,16 +306,22 @@ public class CameraFragment extends Fragment
     private class GraphicFaceTrackerFactory implements MultiProcessor.Factory<Face> {
         @Override
         public Tracker<Face> create(Face face) {
-            return new GraphicFaceTracker();
+            showToast("New Face detected");
+            return new GraphicFaceTracker(mGraphicOverlay);
         }
     }
+
     /**
      * Face tracker for each detected individual. This maintains a face graphic within the app's
      * associated face overlay.
      */
     private class GraphicFaceTracker extends Tracker<Face> {
+        private GraphicOverlay mOverlay;
+        private FaceGraphic mFaceGraphic;
 
-        GraphicFaceTracker() {
+        GraphicFaceTracker(GraphicOverlay overlay) {
+            mOverlay = overlay;
+            mFaceGraphic = new FaceGraphic(overlay);
         }
 
         /**
@@ -251,6 +329,7 @@ public class CameraFragment extends Fragment
          */
         @Override
         public void onNewItem(int faceId, Face item) {
+            mFaceGraphic.setId(faceId);
         }
 
         /**
@@ -258,6 +337,8 @@ public class CameraFragment extends Fragment
          */
         @Override
         public void onUpdate(FaceDetector.Detections<Face> detectionResults, Face face) {
+            mOverlay.add(mFaceGraphic);
+            mFaceGraphic.updateFace(face);
         }
 
         /**
@@ -267,6 +348,7 @@ public class CameraFragment extends Fragment
          */
         @Override
         public void onMissing(FaceDetector.Detections<Face> detectionResults) {
+            mOverlay.remove(mFaceGraphic);
         }
 
         /**
@@ -275,6 +357,7 @@ public class CameraFragment extends Fragment
          */
         @Override
         public void onDone() {
+            mOverlay.remove(mFaceGraphic);
         }
     }
 }
