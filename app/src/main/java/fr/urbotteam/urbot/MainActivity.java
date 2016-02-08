@@ -3,6 +3,8 @@ package fr.urbotteam.urbot;
 import android.app.Activity;
 import android.os.Bundle;
 
+import fr.urbotteam.urbot.Bluetooth.BluetoothFragment;
+
 public class MainActivity extends Activity {
 
     @Override
@@ -12,7 +14,7 @@ public class MainActivity extends Activity {
 
         if (null == savedInstanceState) {
             getFragmentManager().beginTransaction()
-                    .replace(R.id.container, CameraFragment.newInstance())
+                    .replace(R.id.container, BluetoothFragment.newInstance())
                     .commit();
         }
     }
