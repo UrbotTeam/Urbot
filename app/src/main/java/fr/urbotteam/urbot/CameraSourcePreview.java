@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.google.android.gms.common.images.Size;
 import com.google.android.gms.vision.CameraSource;
@@ -71,7 +72,14 @@ public class CameraSourcePreview extends ViewGroup {
 
     private void startIfReady() throws IOException {
         if (mStartRequested && mSurfaceAvailable) {
-            mCameraSource.start(mSurfaceView.getHolder());
+            try {
+                mCameraSource.start(mSurfaceView.getHolder());
+            }
+            catch (SecurityException e)
+            {
+                e.printStackTrace();
+            }
+
             if (mOverlay != null) {
                 Size size = mCameraSource.getPreviewSize();
                 int min = Math.min(size.getWidth(), size.getHeight());
@@ -93,6 +101,7 @@ public class CameraSourcePreview extends ViewGroup {
         @Override
         public void surfaceCreated(SurfaceHolder surface) {
             mSurfaceAvailable = true;
+            Toast.makeText(mContext, "W : "+surface.getSurfaceFrame().width()+" - H : "+surface.getSurfaceFrame().height(), Toast.LENGTH_SHORT).show();
             try {
                 startIfReady();
             } catch (IOException e) {
@@ -107,6 +116,7 @@ public class CameraSourcePreview extends ViewGroup {
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
         }
     }
 

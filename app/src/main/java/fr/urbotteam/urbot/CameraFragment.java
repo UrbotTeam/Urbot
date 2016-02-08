@@ -286,6 +286,7 @@ public class CameraFragment extends Fragment
 
         if (mCameraSource != null) {
             try {
+
                 mPreview.start(mCameraSource, mGraphicOverlay);
             } catch (IOException e) {
                 Log.e(TAG, "Unable to start camera source.", e);
