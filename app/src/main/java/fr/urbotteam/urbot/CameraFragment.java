@@ -322,6 +322,7 @@ public class CameraFragment extends Fragment
         GraphicFaceTracker(GraphicOverlay overlay) {
             mOverlay = overlay;
             mFaceGraphic = new FaceGraphic(overlay);
+
         }
 
         /**
@@ -339,6 +340,7 @@ public class CameraFragment extends Fragment
         public void onUpdate(FaceDetector.Detections<Face> detectionResults, Face face) {
             mOverlay.add(mFaceGraphic);
             mFaceGraphic.updateFace(face);
+            getMovementNeeded(face);
         }
 
         /**
@@ -358,6 +360,33 @@ public class CameraFragment extends Fragment
         @Override
         public void onDone() {
             mOverlay.remove(mFaceGraphic);
+        }
+
+
+        public void getMovementNeeded(Face face){
+
+            Point displaySize = new Point();
+            getActivity().getWindowManager().getDefaultDisplay().getSize(displaySize);
+
+            float posX = face.getPosition().x + face.getWidth() / 2;
+            float posY = face.getPosition().y + face.getHeight() / 2;
+            //showToast("x : " + posX + " -- y : " + posY);
+            if(posX < ((displaySize.x)/2)){
+                if(posY < ((displaySize.y/2))){
+                   // We are in the bottom right corner
+                }
+                else if(posY > ((displaySize.y)/2)){
+                    // We are in the bottom left corner
+                }
+            }
+            else if(posX> ((displaySize.x)/2)){
+                if(posY < ((displaySize.y)/2)){
+                    // We are in the top right corner
+                }
+                else if(posY > ((displaySize.y)/2)){
+                    // We are in the top left corner
+                }
+            }
         }
     }
 }

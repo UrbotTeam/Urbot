@@ -47,6 +47,7 @@ class FaceGraphic extends GraphicOverlay.Graphic {
     private Paint mFacePositionPaint;
     private Paint mIdPaint;
     private Paint mBoxPaint;
+    private Paint mLine;
 
     private volatile Face mFace;
     private int mFaceId;
@@ -66,6 +67,11 @@ class FaceGraphic extends GraphicOverlay.Graphic {
 
         mBoxPaint = new Paint();
         mBoxPaint.setColor(selectedColor);
+        mBoxPaint.setStyle(Paint.Style.STROKE);
+        mBoxPaint.setStrokeWidth(BOX_STROKE_WIDTH);
+
+        mLine = new Paint();
+        mLine.setColor(Color.YELLOW);
         mBoxPaint.setStyle(Paint.Style.STROKE);
         mBoxPaint.setStrokeWidth(BOX_STROKE_WIDTH);
     }
@@ -100,6 +106,9 @@ class FaceGraphic extends GraphicOverlay.Graphic {
         canvas.drawCircle(x, y, FACE_POSITION_RADIUS, mFacePositionPaint);
         canvas.drawText("id: " + mFaceId, x + ID_X_OFFSET, y + ID_Y_OFFSET, mIdPaint);
 
+        canvas.drawLine((2560/2), 0, (2560/2), 1600, mLine);
+        canvas.drawLine(0, (1600/2), 2560, (1600/2), mLine);
+
         // Draws a bounding box around the face.
         float xOffset = scaleX(face.getWidth() / 2.0f);
         float yOffset = scaleY(face.getHeight() / 2.0f);
@@ -109,5 +118,6 @@ class FaceGraphic extends GraphicOverlay.Graphic {
         float bottom = y + yOffset;
         canvas.drawRect(left, top, right, bottom, mBoxPaint);
     }
+
 }
 
