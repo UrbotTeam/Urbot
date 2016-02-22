@@ -28,6 +28,7 @@ import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 
 import java.io.IOException;
+import java.util.LinkedList;
 
 public class CameraFragment extends Fragment
 {
@@ -292,8 +293,9 @@ public class CameraFragment extends Fragment
 
         if (mCameraSource != null) {
             try {
-
                 mPreview.start(mCameraSource, mGraphicOverlay);
+
+                //processCentre();
             } catch (IOException e) {
                 Log.e(TAG, "Unable to start camera source.", e);
                 mCameraSource.release();
@@ -302,10 +304,22 @@ public class CameraFragment extends Fragment
         }
     }
 
+    /*private void processCentre()
+    {
+        Iterator<Face> iterator = faces.iterator();
+        Face face;
+
+        while(iterator.hasNext())
+        {
+            face = iterator.next();
+        }
+    }*/
+
     //==============================================================================================
     // Graphic Face Tracker
     //==============================================================================================
 
+    private LinkedList<Face> faces = new LinkedList();
     /**
      * Factory for creating a face tracker to be associated with a new face.  The multiprocessor
      * uses this factory to create face trackers as needed -- one for each individual.
@@ -313,8 +327,11 @@ public class CameraFragment extends Fragment
     private class GraphicFaceTrackerFactory implements MultiProcessor.Factory<Face> {
         @Override
         public Tracker<Face> create(Face face) {
+            faces.add(face);
             return new GraphicFaceTracker(mGraphicOverlay);
         }
+
+
     }
 
     /**
