@@ -3,6 +3,7 @@ package fr.urbotteam.urbot;
 /**
  * Created by paul on 1/8/16.
  */
+
 import android.content.Context;
 import android.content.res.Configuration;
 import android.util.AttributeSet;
@@ -18,7 +19,7 @@ import com.google.android.gms.vision.CameraSource;
 import java.io.IOException;
 
 public class CameraSourcePreview extends ViewGroup {
-    private static final String TAG = "CameraSourcePreview";
+    private static final String TAG = "CameraDebug";
 
     private Context mContext;
     private SurfaceView mSurfaceView;
@@ -27,6 +28,12 @@ public class CameraSourcePreview extends ViewGroup {
     private CameraSource mCameraSource;
 
     private GraphicOverlay mOverlay;
+
+
+    private void showToast(final String text)
+    {
+        Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+    }
 
     public CameraSourcePreview(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -82,6 +89,7 @@ public class CameraSourcePreview extends ViewGroup {
 
             if (mOverlay != null) {
                 Size size = mCameraSource.getPreviewSize();
+
                 int min = Math.min(size.getWidth(), size.getHeight());
                 int max = Math.max(size.getWidth(), size.getHeight());
                 if (isPortraitMode()) {
@@ -101,7 +109,6 @@ public class CameraSourcePreview extends ViewGroup {
         @Override
         public void surfaceCreated(SurfaceHolder surface) {
             mSurfaceAvailable = true;
-            Toast.makeText(mContext, "W : "+surface.getSurfaceFrame().width()+" - H : "+surface.getSurfaceFrame().height(), Toast.LENGTH_SHORT).show();
             try {
                 startIfReady();
             } catch (IOException e) {
@@ -116,16 +123,16 @@ public class CameraSourcePreview extends ViewGroup {
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-
         }
     }
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        int width = 320;
-        int height = 240;
+        int width = 540;
+        int height = 960;
         if (mCameraSource != null) {
             Size size = mCameraSource.getPreviewSize();
+
             if (size != null) {
                 width = size.getWidth();
                 height = size.getHeight();

@@ -5,8 +5,8 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.Fragment;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.images.Size;
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.Tracker;
@@ -54,7 +55,7 @@ public class CameraFragment extends Fragment
     /**
      * Tag for the {@link Log}.
      */
-    private static final String TAG = "Camera2Fragment";
+    private static final String TAG = "CameraDebug";
 
 
     /**
@@ -84,9 +85,8 @@ public class CameraFragment extends Fragment
         int rc = ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA);
         if (rc == PackageManager.PERMISSION_GRANTED) {
             createCameraSource();
-        } else {
-
         }
+
         return inflater.inflate(R.layout.fragment_camera, container, false);
     }
 
@@ -140,18 +140,7 @@ public class CameraFragment extends Fragment
         if (!ActivityCompat.shouldShowRequestPermissionRationale(this.getActivity(),
                 Manifest.permission.CAMERA)) {
             ActivityCompat.requestPermissions(this.getActivity(), permissions, RC_HANDLE_CAMERA_PERM);
-            return;
         }
-
-        final Activity thisActivity = this.getActivity();
-
-        View.OnClickListener listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ActivityCompat.requestPermissions(thisActivity, permissions,
-                        RC_HANDLE_CAMERA_PERM);
-            }
-        };
     }
 
     /**
@@ -182,14 +171,37 @@ public class CameraFragment extends Fragment
             Log.w(TAG, "Face detector dependencies are not yet available.");
         }
 
+        int width, height;
         Point displaySize = new Point();
+
         getActivity().getWindowManager().getDefaultDisplay().getSize(displaySize);
 
+        height = displaySize.y;
+        width = displaySize.x;
+
+        if(isPortraitMode()) {
+            height = displaySize.x;
+            width = displaySize.y;
+        }
+
         mCameraSource = new CameraSource.Builder(context, detector)
-                .setRequestedPreviewSize(displaySize.x, displaySize.y)
+                .setRequestedPreviewSize(width, height)
                 .setFacing(CameraSource.CAMERA_FACING_FRONT)
                 .setRequestedFps(30.0f)
                 .build();
+    }
+
+    private boolean isPortraitMode() {
+        int orientation = getActivity().getApplicationContext().getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            return false;
+        }
+        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            return true;
+        }
+
+        Log.d(TAG, "isPortraitMode returning false by default");
+        return false;
     }
 
     /**
@@ -256,15 +268,9 @@ public class CameraFragment extends Fragment
 
         Log.e(TAG, "Permission not granted: results len = " + grantResults.length +
                 " Result code = " + (grantResults.length > 0 ? grantResults[0] : "(empty)"));
-
-        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                getActivity().finish();
-            }
-        };
     }
 
-//==============================================================================================
+    //==============================================================================================
     // Camera Source Preview
     //==============================================================================================
 
@@ -364,26 +370,31 @@ public class CameraFragment extends Fragment
 
 
         public void getMovementNeeded(Face face){
-
-            Point displaySize = new Point();
-            getActivity().getWindowManager().getDefaultDisplay().getSize(displaySize);
+            Size size = mCameraSource.getPreviewSize();
 
             float posX = face.getPosition().x + face.getWidth() / 2;
             float posY = face.getPosition().y + face.getHeight() / 2;
             //showToast("x : " + posX + " -- y : " + posY);
-            if(posX < ((displaySize.x)/2)){
-                if(posY < ((displaySize.y/2))){
+
+            if(posX < (size.getWidth() / 2))
+            {
+                if(posY < (size.getHeight() / 2))
+                {
                    // We are in the bottom right corner
                 }
-                else if(posY > ((displaySize.y)/2)){
+                else if(posY > (size.getHeight() / 2))
+                {
                     // We are in the bottom left corner
                 }
             }
-            else if(posX> ((displaySize.x)/2)){
-                if(posY < ((displaySize.y)/2)){
+            else if(posX> (size.getWidth()/2))
+            {
+                if(posY < (size.getHeight() / 2))
+                {
                     // We are in the top right corner
                 }
-                else if(posY > ((displaySize.y)/2)){
+                else if(posY > (size.getHeight() / 2))
+                {
                     // We are in the top left corner
                 }
             }
