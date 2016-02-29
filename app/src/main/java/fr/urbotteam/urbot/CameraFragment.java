@@ -198,12 +198,18 @@ public class CameraFragment extends Fragment
     }
 
     private boolean isPortraitMode() {
-        int orientation = getActivity().getApplicationContext().getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            return false;
+        try {
+            int orientation = getActivity().getApplicationContext().getResources().getConfiguration().orientation;
+            if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                return false;
+            }
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                return true;
+            }
         }
-        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-            return true;
+        catch (Exception e)
+        {
+
         }
 
         Log.d(TAG, "isPortraitMode returning false by default");
@@ -332,11 +338,60 @@ public class CameraFragment extends Fragment
                 y /= size;
 
                 center.set((int)x, (int)y); // TODO remove
-                Log.d(TAG, "run " + center.toString());
-
+                getMovementNeeded(center);
             }
         }, 0, 1000);
     }
+
+    public void getMovementNeeded(Point center){
+        Size size = mCameraSource.getPreviewSize();
+
+        if(size != null) {
+            float posX = center.x;
+            float posY = center.y;
+            float w, h;
+
+            if(isPortraitMode()) {
+                h = size.getWidth() /2;
+                w = size.getHeight() /2;
+            } else {
+                w = size.getWidth() /2;
+                h = size.getHeight() /2;
+            }
+
+            Log.d(TAG, "getMovementNeeded point : "+center.toString());
+            Log.d(TAG, "getMovementNeeded "+posX +" - "+w);
+            //showToast("x : " + posX + " -- y : " + posY);
+
+            if (posX < w)
+            {
+                if (posY < h)
+                {
+                    Log.d(TAG, "getMovementNeeded top left");
+                    // We are in the top left corner
+                }
+                else
+                {
+                    Log.d(TAG, "getMovementNeeded bottom left");
+                    // We are in the bottom left corner
+                }
+            }
+            else
+            {
+                if (posY < h)
+                {
+                    Log.d(TAG, "getMovementNeeded top right");
+                    // We are in the top right corner
+                }
+                else
+                {
+                    Log.d(TAG, "getMovementNeeded bottom right");
+                    // We are in the bottom right corner
+                }
+            }
+        }
+    }
+
     //==============================================================================================
     // Graphic Face Tracker
     //==============================================================================================
@@ -383,8 +438,7 @@ public class CameraFragment extends Fragment
         public void onUpdate(FaceDetector.Detections<Face> detectionResults, Face face) {
             mOverlay.add(mFaceGraphic);
             mFaceGraphic.updateFace(face);
-            faces.remove(this.face);
-            faces.add(face);
+            faces.set(faces.indexOf(this.face), face);
 
             mFaceGraphic.p = center;
             this.face = face;
@@ -409,38 +463,6 @@ public class CameraFragment extends Fragment
         public void onDone() {
             mOverlay.remove(mFaceGraphic);
             faces.remove(face);
-        }
-
-
-        public void getMovementNeeded(Face face){
-            Size size = mCameraSource.getPreviewSize();
-
-            float posX = face.getPosition().x + face.getWidth() / 2;
-            float posY = face.getPosition().y + face.getHeight() / 2;
-            //showToast("x : " + posX + " -- y : " + posY);
-
-            if(posX < (size.getWidth() / 2))
-            {
-                if(posY < (size.getHeight() / 2))
-                {
-                   // We are in the bottom right corner
-                }
-                else if(posY > (size.getHeight() / 2))
-                {
-                    // We are in the bottom left corner
-                }
-            }
-            else if(posX> (size.getWidth()/2))
-            {
-                if(posY < (size.getHeight() / 2))
-                {
-                    // We are in the top right corner
-                }
-                else if(posY > (size.getHeight() / 2))
-                {
-                    // We are in the top left corner
-                }
-            }
         }
     }
 }
