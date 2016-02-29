@@ -28,13 +28,18 @@ import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class CameraFragment extends Fragment
 {
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
     private GraphicOverlay mGraphicOverlay;
+    private volatile LinkedList<Face> faces = new LinkedList();
+    private Point center = new Point();
 
     private static final int RC_HANDLE_GMS = 9001;
     // permission request codes need to be < 256
@@ -213,6 +218,7 @@ public class CameraFragment extends Fragment
         super.onResume();
 
         startCameraSource();
+        processCentre();
     }
 
     /**
@@ -294,8 +300,6 @@ public class CameraFragment extends Fragment
         if (mCameraSource != null) {
             try {
                 mPreview.start(mCameraSource, mGraphicOverlay);
-
-                //processCentre();
             } catch (IOException e) {
                 Log.e(TAG, "Unable to start camera source.", e);
                 mCameraSource.release();
@@ -304,22 +308,38 @@ public class CameraFragment extends Fragment
         }
     }
 
-    /*private void processCentre()
+    private void processCentre()
     {
-        Iterator<Face> iterator = faces.iterator();
-        Face face;
+        final LinkedList<Face> faces = this.faces;
 
-        while(iterator.hasNext())
-        {
-            face = iterator.next();
-        }
-    }*/
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                Iterator<Face> iterator = faces.iterator();
+                Face face;
+                float x = 0, y = 0;
+                int size = faces.size();
 
+                while (iterator.hasNext()) {
+                    face = iterator.next();
+
+                    x += mGraphicOverlay.getWidth() - face.getPosition().x - face.getWidth()/2; // Because camera is mirrored
+                    y += face.getPosition().y + face.getHeight()/2;
+                }
+
+                x /= size;
+                y /= size;
+
+                center.set((int)x, (int)y); // TODO remove
+                Log.d(TAG, "run " + center.toString());
+
+            }
+        }, 0, 1000);
+    }
     //==============================================================================================
     // Graphic Face Tracker
     //==============================================================================================
-
-    private LinkedList<Face> faces = new LinkedList();
     /**
      * Factory for creating a face tracker to be associated with a new face.  The multiprocessor
      * uses this factory to create face trackers as needed -- one for each individual.
@@ -327,11 +347,8 @@ public class CameraFragment extends Fragment
     private class GraphicFaceTrackerFactory implements MultiProcessor.Factory<Face> {
         @Override
         public Tracker<Face> create(Face face) {
-            faces.add(face);
             return new GraphicFaceTracker(mGraphicOverlay);
         }
-
-
     }
 
     /**
@@ -341,6 +358,7 @@ public class CameraFragment extends Fragment
     private class GraphicFaceTracker extends Tracker<Face> {
         private GraphicOverlay mOverlay;
         private FaceGraphic mFaceGraphic;
+        private Face face;
 
         GraphicFaceTracker(GraphicOverlay overlay) {
             mOverlay = overlay;
@@ -354,6 +372,8 @@ public class CameraFragment extends Fragment
         @Override
         public void onNewItem(int faceId, Face item) {
             mFaceGraphic.setId(faceId);
+            face = item;
+            faces.add(face);
         }
 
         /**
@@ -363,7 +383,11 @@ public class CameraFragment extends Fragment
         public void onUpdate(FaceDetector.Detections<Face> detectionResults, Face face) {
             mOverlay.add(mFaceGraphic);
             mFaceGraphic.updateFace(face);
-            getMovementNeeded(face);
+            faces.remove(this.face);
+            faces.add(face);
+
+            mFaceGraphic.p = center;
+            this.face = face;
         }
 
         /**
@@ -374,6 +398,7 @@ public class CameraFragment extends Fragment
         @Override
         public void onMissing(FaceDetector.Detections<Face> detectionResults) {
             mOverlay.remove(mFaceGraphic);
+            faces.remove(face);
         }
 
         /**
@@ -383,6 +408,7 @@ public class CameraFragment extends Fragment
         @Override
         public void onDone() {
             mOverlay.remove(mFaceGraphic);
+            faces.remove(face);
         }
 
 

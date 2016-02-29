@@ -19,6 +19,7 @@ package fr.urbotteam.urbot;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 
 import com.google.android.gms.vision.face.Face;
 
@@ -47,10 +48,12 @@ class FaceGraphic extends GraphicOverlay.Graphic {
     private Paint mFacePositionPaint;
     private Paint mIdPaint;
     private Paint mBoxPaint;
-    private Paint mLine;
+    private Paint mPoint;
 
     private volatile Face mFace;
     private int mFaceId;
+
+    public Point p;
 
     FaceGraphic(GraphicOverlay overlay) {
         super(overlay);
@@ -70,10 +73,11 @@ class FaceGraphic extends GraphicOverlay.Graphic {
         mBoxPaint.setStyle(Paint.Style.STROKE);
         mBoxPaint.setStrokeWidth(BOX_STROKE_WIDTH);
 
-        mLine = new Paint();
-        mLine.setColor(Color.YELLOW);
         mBoxPaint.setStyle(Paint.Style.STROKE);
         mBoxPaint.setStrokeWidth(BOX_STROKE_WIDTH);
+
+        mPoint = new Paint();
+        mPoint.setColor(Color.RED);
     }
 
     void setId(int id) {
@@ -114,6 +118,11 @@ class FaceGraphic extends GraphicOverlay.Graphic {
         float right = x + xOffset;
         float bottom = y + yOffset;
         canvas.drawRect(left, top, right, bottom, mBoxPaint);
+
+        if(p != null)
+        {
+            canvas.drawCircle(p.x, p.y, FACE_POSITION_RADIUS, mPoint);
+        }
     }
 
 }
