@@ -8,12 +8,11 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Point;
+import android.graphics.PointF;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
-import android.util.SparseIntArray;
 import android.view.LayoutInflater;
-import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -38,25 +37,13 @@ public class CameraFragment extends Fragment
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
     private GraphicOverlay mGraphicOverlay;
-    private volatile LinkedList<Face> faces = new LinkedList();
+    private volatile LinkedList<Face> mFaces = new LinkedList();
     private Point center = new Point();
+    private Context mContext;
 
     private static final int RC_HANDLE_GMS = 9001;
     // permission request codes need to be < 256
     private static final int RC_HANDLE_CAMERA_PERM = 2;
-
-    /**
-     * Conversion from screen rotation to JPEG orientation.
-     */
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-    private static final int REQUEST_CAMERA_PERMISSION = 1;
-
-    static {
-        ORIENTATIONS.append(Surface.ROTATION_0, 90);
-        ORIENTATIONS.append(Surface.ROTATION_90, 0);
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);
-        ORIENTATIONS.append(Surface.ROTATION_270, 180);
-    }
 
     /**
      * Tag for the {@link Log}.
@@ -86,8 +73,8 @@ public class CameraFragment extends Fragment
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+    {
         int rc = ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA);
         if (rc == PackageManager.PERMISSION_GRANTED) {
             createCameraSource();
@@ -105,13 +92,11 @@ public class CameraFragment extends Fragment
         }
         catch (ClassCastException e)
         {
-            Log.e(TAG, "onViewCreated Cast exception");
-            e.printStackTrace();
+            Log.e(TAG, "onViewCreated Cast exception", e);
         }
         catch (Exception e)
         {
-            Log.e(TAG, "onViewCreated Unknown exception");
-            e.printStackTrace();
+            Log.e(TAG, "onViewCreated Unknown exception", e);
         }
     }
 
@@ -122,6 +107,8 @@ public class CameraFragment extends Fragment
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+
+        mContext = getActivity().getApplicationContext();
 
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
@@ -143,8 +130,8 @@ public class CameraFragment extends Fragment
 
         final String[] permissions = new String[]{Manifest.permission.CAMERA};
 
-        if (!ActivityCompat.shouldShowRequestPermissionRationale(this.getActivity(),
-                Manifest.permission.CAMERA)) {
+        if (!ActivityCompat.shouldShowRequestPermissionRationale(this.getActivity(), Manifest.permission.CAMERA))
+        {
             ActivityCompat.requestPermissions(this.getActivity(), permissions, RC_HANDLE_CAMERA_PERM);
         }
     }
@@ -155,42 +142,28 @@ public class CameraFragment extends Fragment
      * at long distances.
      */
     private void createCameraSource() {
-
-        Context context = getActivity().getApplicationContext();
-        FaceDetector detector = new FaceDetector.Builder(context)
+        FaceDetector detector = new FaceDetector.Builder(mContext)
                 .setClassificationType(FaceDetector.ALL_CLASSIFICATIONS)
                 .build();
 
-        detector.setProcessor(
-                new MultiProcessor.Builder<>(new GraphicFaceTrackerFactory())
-                        .build());
+        detector.setProcessor(new MultiProcessor.Builder<>(new GraphicFaceTrackerFactory()).build());
 
         if (!detector.isOperational()) {
-            // Note: The first time that an app using face API is installed on a device, GMS will
-            // download a native library to the device in order to do detection.  Usually this
-            // completes before the app is run for the first time.  But if that download has not yet
-            // completed, then the above call will not detect any faces.
-            //
-            // isOperational() can be used to check if the required native library is currently
-            // available.  The detector will automatically become operational once the library
-            // download completes on device.
             Log.w(TAG, "Face detector dependencies are not yet available.");
         }
 
-        int width, height;
         Point displaySize = new Point();
-
         getActivity().getWindowManager().getDefaultDisplay().getSize(displaySize);
 
-        height = displaySize.y;
-        width = displaySize.x;
+        int width = displaySize.x;
+        int height = displaySize.y;
 
         if(isPortraitMode()) {
             height = displaySize.x;
             width = displaySize.y;
         }
 
-        mCameraSource = new CameraSource.Builder(context, detector)
+        mCameraSource = new CameraSource.Builder(mContext, detector)
                 .setRequestedPreviewSize(width, height)
                 .setFacing(CameraSource.CAMERA_FACING_FRONT)
                 .setRequestedFps(30.0f)
@@ -199,7 +172,7 @@ public class CameraFragment extends Fragment
 
     private boolean isPortraitMode() {
         try {
-            int orientation = getActivity().getApplicationContext().getResources().getConfiguration().orientation;
+            int orientation = mContext.getResources().getConfiguration().orientation;
             if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 return false;
             }
@@ -207,9 +180,9 @@ public class CameraFragment extends Fragment
                 return true;
             }
         }
-        catch (Exception e)
+        catch (NullPointerException e)
         {
-
+            Log.d(TAG, "isPortraitMode ", e);
         }
 
         Log.d(TAG, "isPortraitMode returning false by default");
@@ -295,8 +268,7 @@ public class CameraFragment extends Fragment
     private void startCameraSource() {
 
         // check that the device has play services available.
-        int code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(
-                getActivity().getApplicationContext());
+        int code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(mContext);
         if (code != ConnectionResult.SUCCESS) {
             Dialog dlg =
                     GoogleApiAvailability.getInstance().getErrorDialog(this.getActivity(), code, RC_HANDLE_GMS);
@@ -316,80 +288,58 @@ public class CameraFragment extends Fragment
 
     private void processCentre()
     {
-        final LinkedList<Face> faces = this.faces;
-
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                Iterator<Face> iterator = faces.iterator();
+                Iterator<Face> iterator = mFaces.iterator();
                 Face face;
                 float x = 0, y = 0;
-                int size = faces.size();
+                int size = mFaces.size();
 
                 while (iterator.hasNext()) {
                     face = iterator.next();
+                    PointF facePosition = face.getPosition();
 
-                    x += mGraphicOverlay.getWidth() - face.getPosition().x - face.getWidth()/2; // Because camera is mirrored
-                    y += face.getPosition().y + face.getHeight()/2;
+                    x += mGraphicOverlay.getWidth() - facePosition.x - face.getWidth()/2; // Because camera is mirrored
+                    y += facePosition.y + face.getHeight()/2;
                 }
 
                 x /= size;
                 y /= size;
 
                 center.set((int)x, (int)y); // TODO remove
-                getMovementNeeded(center);
+                Point movementNeeded = getMovementNeeded(center);
             }
         }, 0, 1000);
     }
 
-    public void getMovementNeeded(Point center){
+    public Point getMovementNeeded(Point center){
         Size size = mCameraSource.getPreviewSize();
 
-        if(size != null) {
-            float posX = center.x;
-            float posY = center.y;
-            float w, h;
+        if(size != null && center.x != 0 && center.y != 0) {
+            int margin = 50;
+            float w = size.getWidth() /2;
+            float h = size.getHeight() /2;
+            float movementLeft, movementTop;
 
             if(isPortraitMode()) {
                 h = size.getWidth() /2;
                 w = size.getHeight() /2;
-            } else {
-                w = size.getWidth() /2;
-                h = size.getHeight() /2;
             }
 
-            Log.d(TAG, "getMovementNeeded point : "+center.toString());
-            Log.d(TAG, "getMovementNeeded "+posX +" - "+w);
-            //showToast("x : " + posX + " -- y : " + posY);
+            movementLeft = center.x - w;
+            movementTop = center.y - h;
 
-            if (posX < w)
-            {
-                if (posY < h)
-                {
-                    Log.d(TAG, "getMovementNeeded top left");
-                    // We are in the top left corner
-                }
-                else
-                {
-                    Log.d(TAG, "getMovementNeeded bottom left");
-                    // We are in the bottom left corner
-                }
-            }
-            else
-            {
-                if (posY < h)
-                {
-                    Log.d(TAG, "getMovementNeeded top right");
-                    // We are in the top right corner
-                }
-                else
-                {
-                    Log.d(TAG, "getMovementNeeded bottom right");
-                    // We are in the bottom right corner
-                }
-            }
+            if(movementLeft > -margin && movementLeft < margin)
+                movementLeft = 0;
+            if(movementTop > -margin && movementTop < margin)
+                movementTop = 0;
+
+            return new Point((int)movementLeft, (int)movementTop);
         }
+
+        return new Point();
     }
 
     //==============================================================================================
@@ -428,7 +378,7 @@ public class CameraFragment extends Fragment
         public void onNewItem(int faceId, Face item) {
             mFaceGraphic.setId(faceId);
             face = item;
-            faces.add(face);
+            mFaces.add(face);
         }
 
         /**
@@ -438,7 +388,7 @@ public class CameraFragment extends Fragment
         public void onUpdate(FaceDetector.Detections<Face> detectionResults, Face face) {
             mOverlay.add(mFaceGraphic);
             mFaceGraphic.updateFace(face);
-            faces.set(faces.indexOf(this.face), face);
+            mFaces.set(mFaces.indexOf(this.face), face);
 
             mFaceGraphic.p = center;
             this.face = face;
@@ -452,7 +402,7 @@ public class CameraFragment extends Fragment
         @Override
         public void onMissing(FaceDetector.Detections<Face> detectionResults) {
             mOverlay.remove(mFaceGraphic);
-            faces.remove(face);
+            mFaces.remove(face);
         }
 
         /**
@@ -462,7 +412,7 @@ public class CameraFragment extends Fragment
         @Override
         public void onDone() {
             mOverlay.remove(mFaceGraphic);
-            faces.remove(face);
+            mFaces.remove(face);
         }
     }
 }
