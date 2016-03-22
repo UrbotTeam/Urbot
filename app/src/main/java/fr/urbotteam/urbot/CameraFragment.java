@@ -301,8 +301,8 @@ public class CameraFragment extends Fragment
                     face = iterator.next();
                     PointF facePosition = face.getPosition();
 
-                    x += mGraphicOverlay.getWidth() - facePosition.x - face.getWidth()/2; // Because camera is mirrored
-                    y += facePosition.y + face.getHeight()/2;
+                    x += mGraphicOverlay.getWidth() - mGraphicOverlay.getWidthScale() * (facePosition.x + face.getWidth()/2); // Because camera is mirrored
+                    y += mGraphicOverlay.getHeightScale() * (facePosition.y + face.getHeight()/2);
                 }
 
                 x /= size;

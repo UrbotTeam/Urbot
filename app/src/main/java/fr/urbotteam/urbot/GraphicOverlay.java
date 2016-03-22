@@ -1,4 +1,5 @@
 package fr.urbotteam.urbot;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
@@ -35,6 +36,8 @@ public class GraphicOverlay extends View {
     private float mHeightScaleFactor = 1.0f;
     private int mFacing = CameraSource.CAMERA_FACING_BACK;
     private Set<Graphic> mGraphics = new HashSet<>();
+
+    private String TAG = "CameraDebug";
 
     /**
      * Base class for a custom graphics object to be rendered within the graphic overlay.  Subclass
@@ -148,6 +151,16 @@ public class GraphicOverlay extends View {
         }
         postInvalidate();
     }
+
+    public float getWidthScale()
+    {
+        return mWidthScaleFactor;
+    }
+    public float getHeightScale()
+    {
+        return mHeightScaleFactor;
+    }
+
 
     /**
      * Draws the overlay with its associated graphic objects.
