@@ -18,6 +18,8 @@ import java.util.UUID;
  * Created by paul on 4/4/16.
  */
 public class Bluetooth {
+    private static Bluetooth instance;
+
     private BluetoothAdapter mBLuetoothAdapter;
     private BluetoothDevice mDevice;
     private BluetoothSocket mSocket;
@@ -25,24 +27,40 @@ public class Bluetooth {
     private InputStream mInputStream;
     Activity mActivity;
 
-    Bluetooth(Activity activity)
+    private Bluetooth(Activity activity)
     {
         mActivity = activity;
         mBLuetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    }
 
+    public static Bluetooth newInstance(Activity activity)
+    {
+        if(instance == null)
+        {
+            instance = new Bluetooth(activity);
+        }
+
+        return instance;
+    }
+
+    public void startBluetooth()
+    {
         // Inscrire le BroadcastReceiver
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         mActivity.registerReceiver(receiver, filter);
 
         if (!mBLuetoothAdapter.isEnabled()) {
-            Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            mActivity.startActivityForResult(turnOn, 0);
+            Intent btIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            btIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mActivity.getApplicationContext().startActivity(btIntent);
+            //Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            //mActivity.startActivityForResult(turnOn, 0);
         }
 
         mBLuetoothAdapter.startDiscovery();
     }
 
-    private void openBT() throws IOException
+    private void openConnexion() throws IOException
     {
         UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"); //Standard SerialPortService ID
         mSocket = mDevice.createRfcommSocketToServiceRecord(uuid);
@@ -50,10 +68,13 @@ public class Bluetooth {
         mOutputStream = mSocket.getOutputStream();
         mInputStream = mSocket.getInputStream();
 
-        String msg = "perdu";
-        msg += "\n";
-        mOutputStream.write(msg.getBytes());
         //beginListenForData();
+    }
+
+    public void sendData(String message) throws IOException
+    {
+        message += "\n";
+        mOutputStream.write(message.getBytes());
     }
 
     public void closeBluetooth()
@@ -76,21 +97,19 @@ public class Bluetooth {
         }
     }
 
-    // On crée un BroadcastReceiver pour ACTION_FOUND
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            // Quand la recherche trouve un terminal
+
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                // On récupère l'object BluetoothDevice depuis l'Intent
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                // On ajoute le nom et l'adresse du périphérique dans un ArrayAdapter (par exemple pour l'afficher dans une ListView)
+
                 if (device.getName().equals("CVBT_B")) {
                     mDevice = device;
                     mBLuetoothAdapter.cancelDiscovery();
                     try
                     {
-                        openBT();
+                        openConnexion();
                     }
                     catch (Exception e)
                     {

@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Point;
@@ -32,6 +33,8 @@ import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import fr.urbotteam.urbot.Bluetooth.UrbotBluetoothService;
+
 public class CameraFragment extends Fragment
 {
     private CameraSource mCameraSource;
@@ -40,6 +43,7 @@ public class CameraFragment extends Fragment
     private volatile LinkedList<Face> mFaces = new LinkedList();
     private Point center = new Point();
     private Context mContext;
+    //private Bluetooth mBluetooth;
 
     private static final int RC_HANDLE_GMS = 9001;
     // permission request codes need to be < 256
@@ -107,8 +111,10 @@ public class CameraFragment extends Fragment
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+        Log.d(TAG, "onCreate TODO Start bluetooth service");
 
         mContext = getActivity().getApplicationContext();
+        //mBluetooth = Bluetooth.newInstance(getActivity());
 
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
@@ -118,6 +124,9 @@ public class CameraFragment extends Fragment
         } else {
             requestCameraPermission();
         }
+
+        Intent intent = new Intent(this.getActivity(), UrbotBluetoothService.class);
+        getActivity().startService(intent);
     }
 
     /**
@@ -198,6 +207,10 @@ public class CameraFragment extends Fragment
 
         startCameraSource();
         processCentre();
+        //mBluetooth.startBluetooth();
+
+        Intent intent = new Intent(this.getActivity(), UrbotBluetoothService.class);
+        getActivity().startService(intent);
     }
 
     /**
@@ -207,6 +220,10 @@ public class CameraFragment extends Fragment
     public void onPause() {
         super.onPause();
         mPreview.stop();
+        //mBluetooth.closeBluetooth();
+
+        Intent intent = new Intent(this.getActivity(), UrbotBluetoothService.class);
+        getActivity().stopService(intent);
     }
 
     /**
@@ -216,6 +233,10 @@ public class CameraFragment extends Fragment
     @Override
     public void onDestroy() {
         super.onDestroy();
+        //mBluetooth.closeBluetooth();
+        Intent intent = new Intent(this.getActivity(), UrbotBluetoothService.class);
+        getActivity().stopService(intent);
+
         if (mCameraSource != null) {
             mCameraSource.release();
         }
