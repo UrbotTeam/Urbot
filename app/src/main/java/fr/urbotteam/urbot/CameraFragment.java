@@ -36,7 +36,6 @@ import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import fr.urbotteam.urbot.Bluetooth.Bluetooth;
 import fr.urbotteam.urbot.Bluetooth.UrbotBluetoothService;
 
 public class CameraFragment extends Fragment
@@ -49,7 +48,7 @@ public class CameraFragment extends Fragment
     private Context mContext;
     private UrbotBluetoothService mService;
     private boolean mBound;
-    private Bluetooth mBluetooth;
+    private Timer scheduledTimer;
 
     private static final int RC_HANDLE_GMS = 9001;
     // permission request codes need to be < 256
@@ -100,7 +99,6 @@ public class CameraFragment extends Fragment
             Log.e(TAG, "onViewCreated Unknown exception", e);
         }
     }
-
 
     /**
      * Initializes the UI and initiates the creation of a face detector.
@@ -218,18 +216,13 @@ public class CameraFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
+        Log.d(TAG, "onResume ");
 
         startCameraSource();
         processCentre();
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Intent intent = new Intent(getActivity(), UrbotBluetoothService.class);
-                getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-            }
-        }).run();
-        // TODO Service in another thread (now ui is blocked)
+        Intent intent = new Intent(getActivity(), UrbotBluetoothService.class);
+        getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     /**
@@ -239,7 +232,10 @@ public class CameraFragment extends Fragment
     public void onPause() {
         super.onPause();
         mPreview.stop();
-        //mBluetooth.closeBluetooth();
+
+        scheduledTimer.cancel();
+        scheduledTimer.purge();
+
         if(mService != null)
         {
             mService.closeBluetooth();
@@ -258,7 +254,11 @@ public class CameraFragment extends Fragment
     @Override
     public void onDestroy() {
         super.onDestroy();
-        //mBluetooth.closeBluetooth();
+
+        Log.d(TAG, "onDestroy ");
+        scheduledTimer.cancel();
+        scheduledTimer.purge();
+
         if(mService != null)
         {
             mService.closeBluetooth();
@@ -341,29 +341,29 @@ public class CameraFragment extends Fragment
 
     private void processCentre()
     {
-        // TODO stop timer if changing conf
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
+        // TODO remove graphic overlay
+        scheduledTimer = new Timer();
+        scheduledTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-            Iterator<Face> iterator = mFaces.iterator();
-            Face face;
-            float x = 0, y = 0;
-            int size = mFaces.size();
+                Iterator<Face> iterator = mFaces.iterator();
+                Face face;
+                float x = 0, y = 0;
+                int size = mFaces.size();
 
-            while (iterator.hasNext()) {
-                face = iterator.next();
-                PointF facePosition = face.getPosition();
+                while (iterator.hasNext()) {
+                    face = iterator.next();
+                    PointF facePosition = face.getPosition();
 
-                x += mGraphicOverlay.getWidth() - mGraphicOverlay.getWidthScale() * (facePosition.x + face.getWidth()/2); // Because camera is mirrored
-                y += mGraphicOverlay.getHeightScale() * (facePosition.y + face.getHeight()/2);
-            }
+                    x += mGraphicOverlay.getWidth() - mGraphicOverlay.getWidthScale() * (facePosition.x + face.getWidth() / 2); // Because camera is mirrored
+                    y += mGraphicOverlay.getHeightScale() * (facePosition.y + face.getHeight() / 2);
+                }
 
-            x /= size;
-            y /= size;
+                x /= size;
+                y /= size;
 
-            center.set((int)x, (int)y); // TODO remove
-            Point movementNeeded = getMovementNeeded(center);
+                center.set((int) x, (int) y);
+                Point movementNeeded = getMovementNeeded(center);
             }
         }, 0, 1000);
     }
