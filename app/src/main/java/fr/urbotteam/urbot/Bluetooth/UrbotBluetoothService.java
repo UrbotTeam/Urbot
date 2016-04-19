@@ -8,7 +8,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Binder;
 import android.os.IBinder;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,10 +35,13 @@ public class UrbotBluetoothService extends Service {
 
         if (BluetoothDevice.ACTION_FOUND.equals(action)) {
             BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+            Log.d(TAG, "onReceive received broadcast : " + device.getName());
 
             if (device.getName().equals("CVBT_B")) {
+                Log.d(TAG, "onReceive Found device");
                 mDevice = device;
                 mBluetoothAdapter.cancelDiscovery();
+
                 try
                 {
                     openConnexion();
@@ -53,6 +58,7 @@ public class UrbotBluetoothService extends Service {
     @Override
     public void onCreate()
     {
+        Log.d(TAG, "onCreate ");
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
@@ -65,6 +71,7 @@ public class UrbotBluetoothService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId)
     {
+        Log.d(TAG, "onStartCommand ");
         startBluetooth();
         return START_STICKY;
     }
@@ -72,11 +79,12 @@ public class UrbotBluetoothService extends Service {
     @Override
     public IBinder onBind(Intent intent)
     {
-        return null;
+        return mBinder;
     }
 
     public void startBluetooth()
     {
+        Log.d(TAG, "startBluetooth ");
         // Inscrire le BroadcastReceiver
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         this.getApplication().registerReceiver(receiver, filter);
@@ -94,11 +102,27 @@ public class UrbotBluetoothService extends Service {
     {
         UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"); //Standard SerialPortService ID
         mSocket = mDevice.createRfcommSocketToServiceRecord(uuid);
-        mSocket.connect();
-        mOutputStream = mSocket.getOutputStream();
-        mInputStream = mSocket.getInputStream();
+        Log.d(TAG, "openConnexion connect");
+        try
+        {
+            mSocket.connect();
+            mOutputStream = mSocket.getOutputStream();
+            mInputStream = mSocket.getInputStream();
 
-        //beginListenForData();
+            mOutputStream.flush();
+            mInputStream.reset();
+
+            sendData("g");
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "openConnexion Socket error");
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            Log.e(TAG, "openConnexion Unknown error");
+        }
     }
 
     public void closeBluetooth()
@@ -118,6 +142,30 @@ public class UrbotBluetoothService extends Service {
         catch (Exception e)
         {
             e.printStackTrace();
+        }
+    }
+
+    public void sendData(String message) throws IOException
+    {
+        try
+        {
+            Log.d(TAG, "sendData ");
+            message += "\n";
+            mOutputStream.write(message.getBytes());
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            Log.e(TAG, "sendData Error");
+        }
+    }
+
+    private final IBinder mBinder = new LocalBinder();
+
+    public class LocalBinder extends Binder {
+        public UrbotBluetoothService getService() {
+            // Return this instance of LocalService so clients can call public methods
+            return UrbotBluetoothService.this;
         }
     }
 }

@@ -4,13 +4,16 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.Fragment;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -33,6 +36,7 @@ import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import fr.urbotteam.urbot.Bluetooth.Bluetooth;
 import fr.urbotteam.urbot.Bluetooth.UrbotBluetoothService;
 
 public class CameraFragment extends Fragment
@@ -43,7 +47,9 @@ public class CameraFragment extends Fragment
     private volatile LinkedList<Face> mFaces = new LinkedList();
     private Point center = new Point();
     private Context mContext;
-    //private Bluetooth mBluetooth;
+    private UrbotBluetoothService mService;
+    private boolean mBound;
+    private Bluetooth mBluetooth;
 
     private static final int RC_HANDLE_GMS = 9001;
     // permission request codes need to be < 256
@@ -111,7 +117,6 @@ public class CameraFragment extends Fragment
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        Log.d(TAG, "onCreate TODO Start bluetooth service");
 
         mContext = getActivity().getApplicationContext();
         //mBluetooth = Bluetooth.newInstance(getActivity());
@@ -126,8 +131,27 @@ public class CameraFragment extends Fragment
         }
 
         Intent intent = new Intent(this.getActivity(), UrbotBluetoothService.class);
-        getActivity().startService(intent);
+        getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
+
+    /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            Log.d(TAG, "onServiceConnected ");
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            UrbotBluetoothService.LocalBinder binder = (UrbotBluetoothService.LocalBinder) service;
+            mService = binder.getService();
+            mService.startBluetooth();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
 
     /**
      * Handles the requesting of the camera permission.  This includes
@@ -210,7 +234,8 @@ public class CameraFragment extends Fragment
         //mBluetooth.startBluetooth();
 
         Intent intent = new Intent(this.getActivity(), UrbotBluetoothService.class);
-        getActivity().startService(intent);
+        getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        // TODO Service in another thread (now ui is blocked)
     }
 
     /**
@@ -221,9 +246,15 @@ public class CameraFragment extends Fragment
         super.onPause();
         mPreview.stop();
         //mBluetooth.closeBluetooth();
+        if(mService != null)
+        {
+            mService.closeBluetooth();
 
-        Intent intent = new Intent(this.getActivity(), UrbotBluetoothService.class);
-        getActivity().stopService(intent);
+            if(mBound) {
+                getActivity().unbindService(mConnection);
+                mBound = false;
+            }
+        }
     }
 
     /**
@@ -234,8 +265,15 @@ public class CameraFragment extends Fragment
     public void onDestroy() {
         super.onDestroy();
         //mBluetooth.closeBluetooth();
-        Intent intent = new Intent(this.getActivity(), UrbotBluetoothService.class);
-        getActivity().stopService(intent);
+        if(mService != null)
+        {
+            mService.closeBluetooth();
+
+            if(mBound) {
+                getActivity().unbindService(mConnection);
+                mBound = false;
+            }
+        }
 
         if (mCameraSource != null) {
             mCameraSource.release();
@@ -313,24 +351,24 @@ public class CameraFragment extends Fragment
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                Iterator<Face> iterator = mFaces.iterator();
-                Face face;
-                float x = 0, y = 0;
-                int size = mFaces.size();
+            Iterator<Face> iterator = mFaces.iterator();
+            Face face;
+            float x = 0, y = 0;
+            int size = mFaces.size();
 
-                while (iterator.hasNext()) {
-                    face = iterator.next();
-                    PointF facePosition = face.getPosition();
+            while (iterator.hasNext()) {
+                face = iterator.next();
+                PointF facePosition = face.getPosition();
 
-                    x += mGraphicOverlay.getWidth() - mGraphicOverlay.getWidthScale() * (facePosition.x + face.getWidth()/2); // Because camera is mirrored
-                    y += mGraphicOverlay.getHeightScale() * (facePosition.y + face.getHeight()/2);
-                }
+                x += mGraphicOverlay.getWidth() - mGraphicOverlay.getWidthScale() * (facePosition.x + face.getWidth()/2); // Because camera is mirrored
+                y += mGraphicOverlay.getHeightScale() * (facePosition.y + face.getHeight()/2);
+            }
 
-                x /= size;
-                y /= size;
+            x /= size;
+            y /= size;
 
-                center.set((int)x, (int)y); // TODO remove
-                Point movementNeeded = getMovementNeeded(center);
+            center.set((int)x, (int)y); // TODO remove
+            Point movementNeeded = getMovementNeeded(center);
             }
         }, 0, 1000);
     }

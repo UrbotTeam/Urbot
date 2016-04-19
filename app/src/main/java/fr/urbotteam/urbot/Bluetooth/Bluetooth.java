@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +19,7 @@ import java.util.UUID;
  * Created by paul on 4/4/16.
  */
 public class Bluetooth {
+    private static final String TAG = "CameraDebug";
     private static Bluetooth instance;
 
     private BluetoothAdapter mBLuetoothAdapter;
@@ -45,6 +47,7 @@ public class Bluetooth {
 
     public void startBluetooth()
     {
+        Log.d(TAG, "startBluetooth ");
         // Inscrire le BroadcastReceiver
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         mActivity.registerReceiver(receiver, filter);
@@ -68,11 +71,13 @@ public class Bluetooth {
         mOutputStream = mSocket.getOutputStream();
         mInputStream = mSocket.getInputStream();
 
+        sendData("h");
         //beginListenForData();
     }
 
     public void sendData(String message) throws IOException
     {
+        Log.d(TAG, "sendData ");
         message += "\n";
         mOutputStream.write(message.getBytes());
     }
@@ -103,10 +108,12 @@ public class Bluetooth {
 
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                Log.d(TAG, "onReceive device : "+device.getName());
 
                 if (device.getName().equals("CVBT_B")) {
                     mDevice = device;
                     mBLuetoothAdapter.cancelDiscovery();
+                    Log.d(TAG, "onReceive Found the device");
                     try
                     {
                         openConnexion();
