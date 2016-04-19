@@ -35,10 +35,10 @@ public class UrbotBluetoothService extends Service {
 
         if (BluetoothDevice.ACTION_FOUND.equals(action)) {
             BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-            Log.d(TAG, "onReceive received broadcast : " + device.getName());
+            Log.d(TAG, "Found device : " + device.getName());
 
             if (device.getName().equals("CVBT_B")) {
-                Log.d(TAG, "onReceive Found device");
+                Log.d(TAG, "Found arduino device");
                 mDevice = device;
                 mBluetoothAdapter.cancelDiscovery();
 
@@ -58,7 +58,6 @@ public class UrbotBluetoothService extends Service {
     @Override
     public void onCreate()
     {
-        Log.d(TAG, "onCreate ");
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
@@ -71,7 +70,6 @@ public class UrbotBluetoothService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId)
     {
-        Log.d(TAG, "onStartCommand ");
         startBluetooth();
         return START_STICKY;
     }
@@ -84,7 +82,7 @@ public class UrbotBluetoothService extends Service {
 
     public void startBluetooth()
     {
-        Log.d(TAG, "startBluetooth ");
+        Log.d(TAG, "Starting bluetooth");
         // Inscrire le BroadcastReceiver
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         this.getApplication().registerReceiver(receiver, filter);
@@ -102,7 +100,7 @@ public class UrbotBluetoothService extends Service {
     {
         UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"); //Standard SerialPortService ID
         mSocket = mDevice.createRfcommSocketToServiceRecord(uuid);
-        Log.d(TAG, "openConnexion connect");
+
         try
         {
             mSocket.connect();
@@ -127,6 +125,8 @@ public class UrbotBluetoothService extends Service {
 
     public void closeBluetooth()
     {
+        Log.d(TAG, "Closing bluetooth");
+
         try {
             mBluetoothAdapter.cancelDiscovery();
             mBluetoothAdapter.disable();
@@ -149,7 +149,7 @@ public class UrbotBluetoothService extends Service {
     {
         try
         {
-            Log.d(TAG, "sendData ");
+            Log.d(TAG, "Sending data");
             message += "\n";
             mOutputStream.write(message.getBytes());
         }
