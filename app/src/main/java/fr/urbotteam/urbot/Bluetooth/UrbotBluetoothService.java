@@ -49,6 +49,7 @@ public class UrbotBluetoothService extends Service {
                 catch (Exception e)
                 {
                     e.printStackTrace();
+                    Log.e(TAG, "Error while opening bluetooth connexion");
                 }
             }
         }
@@ -107,19 +108,16 @@ public class UrbotBluetoothService extends Service {
             mOutputStream = mSocket.getOutputStream();
             mInputStream = mSocket.getInputStream();
 
-            mOutputStream.flush();
-            mInputStream.reset();
-
-            sendData("g");
+            sendData("h");
         }
         catch (IOException e) {
             e.printStackTrace();
-            Log.e(TAG, "openConnexion Socket error");
+            Log.e(TAG, "Socket error");
         }
         catch (Exception e)
         {
             e.printStackTrace();
-            Log.e(TAG, "openConnexion Unknown error");
+            Log.e(TAG, "Unknown error");
         }
     }
 

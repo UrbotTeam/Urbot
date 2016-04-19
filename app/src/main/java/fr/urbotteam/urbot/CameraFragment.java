@@ -55,17 +55,8 @@ public class CameraFragment extends Fragment
     // permission request codes need to be < 256
     private static final int RC_HANDLE_CAMERA_PERM = 2;
 
-    /**
-     * Tag for the {@link Log}.
-     */
     private static final String TAG = "CameraDebug";
 
-
-    /**
-     * Shows a {@link Toast} on the UI thread.
-     *
-     * @param text The message to show
-     */
     private void showToast(final String text) {
         final Activity activity = getActivity();
         if (activity != null) {
@@ -119,7 +110,6 @@ public class CameraFragment extends Fragment
         super.onCreate(icicle);
 
         mContext = getActivity().getApplicationContext();
-        //mBluetooth = Bluetooth.newInstance(getActivity());
 
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
@@ -231,10 +221,14 @@ public class CameraFragment extends Fragment
 
         startCameraSource();
         processCentre();
-        //mBluetooth.startBluetooth();
 
-        Intent intent = new Intent(this.getActivity(), UrbotBluetoothService.class);
-        getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(getActivity(), UrbotBluetoothService.class);
+                getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+            }
+        }).run();
         // TODO Service in another thread (now ui is blocked)
     }
 
@@ -347,6 +341,7 @@ public class CameraFragment extends Fragment
 
     private void processCentre()
     {
+        // TODO stop timer if changing conf
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
