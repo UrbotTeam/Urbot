@@ -46,12 +46,9 @@ public class UrbotBluetoothService extends Service {
                     mDevice = device;
                     mBluetoothAdapter.cancelDiscovery();
 
-                    try
-                    {
+                    try {
                         openConnexion();
-                    }
-                    catch (Exception e)
-                    {
+                    } catch (Exception e) {
                         e.printStackTrace();
                         Log.e(TAG, "Error while opening bluetooth connexion");
                     }
@@ -61,38 +58,32 @@ public class UrbotBluetoothService extends Service {
     };
 
     @Override
-    public void onCreate()
-    {
+    public void onCreate() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
     @Override
-    public void onDestroy()
-    {
+    public void onDestroy() {
         closeBluetooth();
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId)
-    {
+    public int onStartCommand(Intent intent, int flags, int startId) {
         startBluetooth();
         return START_STICKY;
     }
 
     @Override
-    public IBinder onBind(Intent intent)
-    {
+    public IBinder onBind(Intent intent) {
         return mBinder;
     }
 
-    public void toggleBluetoothAction()
-    {
+    public void toggleBluetoothAction() {
         bluetoothRequestAction = (!bluetoothRequestAction);
     }
 
-    public void startBluetooth()
-    {
-        if(!bluetoothConnected) {
+    public void startBluetooth() {
+        if (!bluetoothConnected) {
             Log.d(TAG, "Starting bluetooth");
 
             // Inscrire le BroadcastReceiver
@@ -103,7 +94,7 @@ public class UrbotBluetoothService extends Service {
                 // TODO if user say no, close the appli
                 Intent btIntent;
 
-                if(bluetoothRequestAction) {
+                if (bluetoothRequestAction) {
                     btIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                     btIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     getApplicationContext().startActivity(btIntent);
@@ -115,39 +106,31 @@ public class UrbotBluetoothService extends Service {
             }
 
             mBluetoothAdapter.startDiscovery();
-        }
-        else
-        {
+        } else {
             Log.d(TAG, "Bluetooth is already connected");
         }
     }
 
-    private void openConnexion() throws IOException
-    {
+    private void openConnexion() throws IOException {
         UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"); //Standard SerialPortService ID
         mSocket = mDevice.createRfcommSocketToServiceRecord(uuid);
 
-        try
-        {
+        try {
             mSocket.connect();
             mOutputStream = mSocket.getOutputStream();
             mInputStream = mSocket.getInputStream();
 
             bluetoothConnected = true;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             Log.e(TAG, "Socket error");
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             Log.e(TAG, "Unknown error");
         }
     }
 
-    public void closeBluetooth()
-    {
+    public void closeBluetooth() {
         Log.d(TAG, "Closing bluetooth");
 
         try {
@@ -157,32 +140,25 @@ public class UrbotBluetoothService extends Service {
             mBluetoothAdapter.disable();
             getApplication().unregisterReceiver(receiver);
 
-            if(mOutputStream != null)
+            if (mOutputStream != null)
                 mOutputStream.close();
-            if(mInputStream != null)
+            if (mInputStream != null)
                 mInputStream.close();
-            if(mSocket != null)
+            if (mSocket != null)
                 mSocket.close();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void sendData(String message) throws IOException
-    {
-        try
-        {
-            if(bluetoothConnected)
-            {
+    public void sendData(String message) throws IOException {
+        try {
+            if (bluetoothConnected) {
                 Log.d(TAG, "Sending data");
                 message += "\n";
                 mOutputStream.write(message.getBytes());
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             Log.e(TAG, "sendData Error");
         }

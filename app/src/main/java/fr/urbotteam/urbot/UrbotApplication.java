@@ -25,8 +25,7 @@ public class UrbotApplication extends Application {
         MainActivity urbotActivity = new MainActivity();
     }
 
-    public boolean isKeepBluetooth()
-    {
+    public boolean isKeepBluetooth() {
         return this.keepBluetooth;
     }
 }
