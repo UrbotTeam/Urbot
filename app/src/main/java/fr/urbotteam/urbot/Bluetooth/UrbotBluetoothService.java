@@ -28,31 +28,32 @@ public class UrbotBluetoothService extends Service {
     private BluetoothSocket mSocket;
     private OutputStream mOutputStream;
     private InputStream mInputStream;
+    private final IBinder mBinder = new LocalBinder();
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
-        String action = intent.getAction();
+            String action = intent.getAction();
 
-        if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-            Log.d(TAG, "Found device : " + device.getName());
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                Log.d(TAG, "Found device : " + device.getName());
 
-            if (device.getName().equals("CVBT_B")) {
-                Log.d(TAG, "Found arduino device");
-                mDevice = device;
-                mBluetoothAdapter.cancelDiscovery();
+                if (device.getName() != null && device.getName().equals("CVBT_B")) {
+                    Log.d(TAG, "Found arduino device");
+                    mDevice = device;
+                    mBluetoothAdapter.cancelDiscovery();
 
-                try
-                {
-                    openConnexion();
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                    Log.e(TAG, "Error while opening bluetooth connexion");
+                    try
+                    {
+                        openConnexion();
+                    }
+                    catch (Exception e)
+                    {
+                        e.printStackTrace();
+                        Log.e(TAG, "Error while opening bluetooth connexion");
+                    }
                 }
             }
-        }
         }
     };
 
@@ -89,6 +90,7 @@ public class UrbotBluetoothService extends Service {
         this.getApplication().registerReceiver(receiver, filter);
 
         if (!mBluetoothAdapter.isEnabled()) {
+            // TODO if user say no, close the appli
             Intent btIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             btIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             getApplicationContext().startActivity(btIntent);
@@ -107,8 +109,6 @@ public class UrbotBluetoothService extends Service {
             mSocket.connect();
             mOutputStream = mSocket.getOutputStream();
             mInputStream = mSocket.getInputStream();
-
-            sendData("h");
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -157,8 +157,6 @@ public class UrbotBluetoothService extends Service {
             Log.e(TAG, "sendData Error");
         }
     }
-
-    private final IBinder mBinder = new LocalBinder();
 
     public class LocalBinder extends Binder {
         public UrbotBluetoothService getService() {

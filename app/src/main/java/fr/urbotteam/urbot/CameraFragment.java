@@ -39,13 +39,15 @@ import java.util.TimerTask;
 import fr.urbotteam.urbot.Bluetooth.UrbotBluetoothService;
 
 public class CameraFragment extends Fragment {
+    // TODO Make a service out of the fragment
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
     private GraphicOverlay mGraphicOverlay;
     private volatile LinkedList<Face> mFaces = new LinkedList();
     private Point center = new Point();
     private Context mContext;
-    private UrbotBluetoothService mService;
+    private Activity mActivity;
+    private UrbotBluetoothService urbotBluetoothService;
     private boolean mBound;
     private Timer scheduledTimer;
 
@@ -55,6 +57,7 @@ public class CameraFragment extends Fragment {
 
     private static final String TAG = "CameraDebug";
 
+    // TODO remove this function
     private void showToast(final String text) {
         final Activity activity = getActivity();
         if (activity != null) {
@@ -100,7 +103,8 @@ public class CameraFragment extends Fragment {
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
 
-        mContext = getActivity().getApplicationContext();
+        mActivity = getActivity();
+        mContext = mActivity.getApplicationContext();
 
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
@@ -112,7 +116,7 @@ public class CameraFragment extends Fragment {
         }
 
         Intent intent = new Intent(this.getActivity(), UrbotBluetoothService.class);
-        getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        mActivity.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     /**
@@ -125,8 +129,8 @@ public class CameraFragment extends Fragment {
             Log.d(TAG, "onServiceConnected ");
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             UrbotBluetoothService.LocalBinder binder = (UrbotBluetoothService.LocalBinder) service;
-            mService = binder.getService();
-            mService.startBluetooth();
+            urbotBluetoothService = binder.getService();
+            urbotBluetoothService.startBluetooth();
             mBound = true;
         }
 
@@ -213,8 +217,8 @@ public class CameraFragment extends Fragment {
         startCameraSource();
         processCentre();
 
-        Intent intent = new Intent(getActivity(), UrbotBluetoothService.class);
-        getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        Intent intent = new Intent(mActivity, UrbotBluetoothService.class);
+        mActivity.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     /**
@@ -228,11 +232,11 @@ public class CameraFragment extends Fragment {
         scheduledTimer.cancel();
         scheduledTimer.purge();
 
-        if (mService != null) {
-            mService.closeBluetooth();
+        if (urbotBluetoothService != null) {
+            urbotBluetoothService.closeBluetooth();
 
             if (mBound) {
-                getActivity().unbindService(mConnection);
+                mActivity.unbindService(mConnection);
                 mBound = false;
             }
         }
@@ -250,11 +254,11 @@ public class CameraFragment extends Fragment {
         scheduledTimer.cancel();
         scheduledTimer.purge();
 
-        if (mService != null) {
-            mService.closeBluetooth();
+        if (urbotBluetoothService != null) {
+            urbotBluetoothService.closeBluetooth();
 
             if (mBound) {
-                getActivity().unbindService(mConnection);
+                mActivity.unbindService(mConnection);
                 mBound = false;
             }
         }
@@ -309,7 +313,6 @@ public class CameraFragment extends Fragment {
      * again when the camera source is created.
      */
     private void startCameraSource() {
-
         // check that the device has play services available.
         int code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(mContext);
         if (code != ConnectionResult.SUCCESS) {
@@ -335,24 +338,25 @@ public class CameraFragment extends Fragment {
         scheduledTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                Iterator<Face> iterator = mFaces.iterator();
-                Face face;
-                float x = 0, y = 0;
-                int size = mFaces.size();
+            Iterator<Face> iterator = mFaces.iterator();
+            Face face;
+            float x = 0, y = 0;
+            int size = mFaces.size();
 
-                while (iterator.hasNext()) {
-                    face = iterator.next();
-                    PointF facePosition = face.getPosition();
+            while (iterator.hasNext()) {
+                face = iterator.next();
+                PointF facePosition = face.getPosition();
 
-                    x += mGraphicOverlay.getWidth() - mGraphicOverlay.getWidthScale() * (facePosition.x + face.getWidth() / 2); // Because camera is mirrored
-                    y += mGraphicOverlay.getHeightScale() * (facePosition.y + face.getHeight() / 2);
-                }
+                x += mGraphicOverlay.getWidth() - mGraphicOverlay.getWidthScale() * (facePosition.x + face.getWidth() / 2); // Because camera is mirrored
+                y += mGraphicOverlay.getHeightScale() * (facePosition.y + face.getHeight() / 2);
+            }
 
-                x /= size;
-                y /= size;
+            x /= size;
+            y /= size;
 
-                center.set((int) x, (int) y);
-                Point movementNeeded = getMovementNeeded(center);
+            center.set((int) x, (int) y);
+            Point movementNeeded = getMovementNeeded(center);
+            // TODO Send data to arduino depending on movement needed
             }
         }, 0, 1000);
     }
