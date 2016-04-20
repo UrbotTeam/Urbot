@@ -30,8 +30,7 @@ public class CameraSourcePreview extends ViewGroup {
     private GraphicOverlay mOverlay;
 
 
-    private void showToast(final String text)
-    {
+    private void showToast(final String text) {
         Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
     }
 
@@ -81,9 +80,7 @@ public class CameraSourcePreview extends ViewGroup {
         if (mStartRequested && mSurfaceAvailable) {
             try {
                 mCameraSource.start(mSurfaceView.getHolder());
-            }
-            catch (SecurityException e)
-            {
+            } catch (SecurityException e) {
                 e.printStackTrace();
             }
 
@@ -119,6 +116,7 @@ public class CameraSourcePreview extends ViewGroup {
         @Override
         public void surfaceDestroyed(SurfaceHolder surface) {
             mSurfaceAvailable = false;
+            release();
         }
 
         @Override

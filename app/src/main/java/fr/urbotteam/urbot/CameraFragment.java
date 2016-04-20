@@ -38,8 +38,7 @@ import java.util.TimerTask;
 
 import fr.urbotteam.urbot.Bluetooth.UrbotBluetoothService;
 
-public class CameraFragment extends Fragment
-{
+public class CameraFragment extends Fragment {
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
     private GraphicOverlay mGraphicOverlay;
@@ -73,8 +72,7 @@ public class CameraFragment extends Fragment
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
-    {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         int rc = ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA);
         if (rc == PackageManager.PERMISSION_GRANTED) {
             createCameraSource();
@@ -85,17 +83,12 @@ public class CameraFragment extends Fragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        try
-        {
+        try {
             mPreview = (CameraSourcePreview) view.findViewById(R.id.preview);
             mGraphicOverlay = (GraphicOverlay) view.findViewById(R.id.faceOverlay);
-        }
-        catch (ClassCastException e)
-        {
+        } catch (ClassCastException e) {
             Log.e(TAG, "onViewCreated Cast exception", e);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             Log.e(TAG, "onViewCreated Unknown exception", e);
         }
     }
@@ -122,7 +115,9 @@ public class CameraFragment extends Fragment
         getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
-    /** Defines callbacks for service binding, passed to bindService() */
+    /**
+     * Defines callbacks for service binding, passed to bindService()
+     */
     private ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
@@ -151,8 +146,7 @@ public class CameraFragment extends Fragment
 
         final String[] permissions = new String[]{Manifest.permission.CAMERA};
 
-        if (!ActivityCompat.shouldShowRequestPermissionRationale(this.getActivity(), Manifest.permission.CAMERA))
-        {
+        if (!ActivityCompat.shouldShowRequestPermissionRationale(this.getActivity(), Manifest.permission.CAMERA)) {
             ActivityCompat.requestPermissions(this.getActivity(), permissions, RC_HANDLE_CAMERA_PERM);
         }
     }
@@ -179,7 +173,7 @@ public class CameraFragment extends Fragment
         int width = displaySize.x;
         int height = displaySize.y;
 
-        if(isPortraitMode()) {
+        if (isPortraitMode()) {
             height = displaySize.x;
             width = displaySize.y;
         }
@@ -200,9 +194,7 @@ public class CameraFragment extends Fragment
             if (orientation == Configuration.ORIENTATION_PORTRAIT) {
                 return true;
             }
-        }
-        catch (NullPointerException e)
-        {
+        } catch (NullPointerException e) {
             Log.d(TAG, "isPortraitMode ", e);
         }
 
@@ -236,11 +228,10 @@ public class CameraFragment extends Fragment
         scheduledTimer.cancel();
         scheduledTimer.purge();
 
-        if(mService != null)
-        {
+        if (mService != null) {
             mService.closeBluetooth();
 
-            if(mBound) {
+            if (mBound) {
                 getActivity().unbindService(mConnection);
                 mBound = false;
             }
@@ -259,11 +250,10 @@ public class CameraFragment extends Fragment
         scheduledTimer.cancel();
         scheduledTimer.purge();
 
-        if(mService != null)
-        {
+        if (mService != null) {
             mService.closeBluetooth();
 
-            if(mBound) {
+            if (mBound) {
                 getActivity().unbindService(mConnection);
                 mBound = false;
             }
@@ -339,8 +329,7 @@ public class CameraFragment extends Fragment
         }
     }
 
-    private void processCentre()
-    {
+    private void processCentre() {
         // TODO remove graphic overlay
         scheduledTimer = new Timer();
         scheduledTimer.scheduleAtFixedRate(new TimerTask() {
@@ -368,29 +357,29 @@ public class CameraFragment extends Fragment
         }, 0, 1000);
     }
 
-    public Point getMovementNeeded(Point center){
+    public Point getMovementNeeded(Point center) {
         Size size = mCameraSource.getPreviewSize();
 
-        if(size != null && center.x != 0 && center.y != 0) {
+        if (size != null && center.x != 0 && center.y != 0) {
             int margin = 50;
-            float w = size.getWidth() /2;
-            float h = size.getHeight() /2;
+            float w = size.getWidth() / 2;
+            float h = size.getHeight() / 2;
             float movementLeft, movementTop;
 
-            if(isPortraitMode()) {
-                h = size.getWidth() /2;
-                w = size.getHeight() /2;
+            if (isPortraitMode()) {
+                h = size.getWidth() / 2;
+                w = size.getHeight() / 2;
             }
 
             movementLeft = center.x - w;
             movementTop = center.y - h;
 
-            if(movementLeft > -margin && movementLeft < margin)
+            if (movementLeft > -margin && movementLeft < margin)
                 movementLeft = 0;
-            if(movementTop > -margin && movementTop < margin)
+            if (movementTop > -margin && movementTop < margin)
                 movementTop = 0;
 
-            return new Point((int)movementLeft, (int)movementTop);
+            return new Point((int) movementLeft, (int) movementTop);
         }
 
         return new Point();
@@ -399,6 +388,7 @@ public class CameraFragment extends Fragment
     //==============================================================================================
     // Graphic Face Tracker
     //==============================================================================================
+
     /**
      * Factory for creating a face tracker to be associated with a new face.  The multiprocessor
      * uses this factory to create face trackers as needed -- one for each individual.
