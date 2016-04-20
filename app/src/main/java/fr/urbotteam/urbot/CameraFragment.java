@@ -50,6 +50,7 @@ public class CameraFragment extends Fragment {
     private UrbotBluetoothService urbotBluetoothService;
     private boolean mBound;
     private Timer scheduledTimer;
+    private boolean keepBluetooth = false;
 
     private static final int RC_HANDLE_GMS = 9001;
     // permission request codes need to be < 256
@@ -212,13 +213,13 @@ public class CameraFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume ");
+        Log.d("TRY", "onResume ");
+
+        Intent intent = new Intent(this.getActivity(), UrbotBluetoothService.class);
+        mActivity.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
         startCameraSource();
         processCentre();
-
-        Intent intent = new Intent(mActivity, UrbotBluetoothService.class);
-        mActivity.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     /**
@@ -228,17 +229,24 @@ public class CameraFragment extends Fragment {
     public void onPause() {
         super.onPause();
         mPreview.stop();
+        Log.d("TRY", "onPause ");
 
         scheduledTimer.cancel();
         scheduledTimer.purge();
 
-        if (urbotBluetoothService != null) {
-            urbotBluetoothService.closeBluetooth();
+        try {
+            if(((UrbotApplication)mActivity.getApplication()).isKeepBluetooth()) {
+                if (urbotBluetoothService != null) {
+                    urbotBluetoothService.closeBluetooth();
 
-            if (mBound) {
-                mActivity.unbindService(mConnection);
-                mBound = false;
+                    if (mBound) {
+                        mActivity.unbindService(mConnection);
+                        mBound = false;
+                    }
+                }
             }
+        } catch (ClassCastException e) {
+            Log.e(TAG, "Cast exception", e);
         }
     }
 
@@ -250,21 +258,23 @@ public class CameraFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
 
-        Log.d(TAG, "onDestroy ");
+        Log.d("TRY", "onDestroy ");
         scheduledTimer.cancel();
         scheduledTimer.purge();
 
-        if (urbotBluetoothService != null) {
-            urbotBluetoothService.closeBluetooth();
+        try {
+            if(((UrbotApplication)mActivity.getApplication()).isKeepBluetooth()) {
+                if (urbotBluetoothService != null) {
+                    urbotBluetoothService.closeBluetooth();
 
-            if (mBound) {
-                mActivity.unbindService(mConnection);
-                mBound = false;
+                    if (mBound) {
+                        mActivity.unbindService(mConnection);
+                        mBound = false;
+                    }
+                }
             }
-        }
-
-        if (mCameraSource != null) {
-            mCameraSource.release();
+        } catch (ClassCastException e) {
+            Log.e(TAG, "Cast exception", e);
         }
     }
 
@@ -338,25 +348,46 @@ public class CameraFragment extends Fragment {
         scheduledTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-            Iterator<Face> iterator = mFaces.iterator();
-            Face face;
-            float x = 0, y = 0;
-            int size = mFaces.size();
+                if(urbotBluetoothService != null && mFaces.size() != 0) {
+                    Iterator<Face> iterator = mFaces.iterator();
+                    Face face;
+                    float x = 0, y = 0;
+                    int size = mFaces.size();
 
-            while (iterator.hasNext()) {
-                face = iterator.next();
-                PointF facePosition = face.getPosition();
+                    while (iterator.hasNext()) {
+                        face = iterator.next();
+                        PointF facePosition = face.getPosition();
 
-                x += mGraphicOverlay.getWidth() - mGraphicOverlay.getWidthScale() * (facePosition.x + face.getWidth() / 2); // Because camera is mirrored
-                y += mGraphicOverlay.getHeightScale() * (facePosition.y + face.getHeight() / 2);
-            }
+                        x += mGraphicOverlay.getWidth() - mGraphicOverlay.getWidthScale() * (facePosition.x + face.getWidth() / 2); // Because camera is mirrored
+                        y += mGraphicOverlay.getHeightScale() * (facePosition.y + face.getHeight() / 2);
+                    }
 
-            x /= size;
-            y /= size;
+                    x /= size;
+                    y /= size;
 
-            center.set((int) x, (int) y);
-            Point movementNeeded = getMovementNeeded(center);
-            // TODO Send data to arduino depending on movement needed
+                    center.set((int) x, (int) y);
+                    Point movementNeeded = getMovementNeeded(center);
+
+                    try {
+                        if (movementNeeded.x > 0) {
+                            urbotBluetoothService.sendData("g");
+                            Log.d(TAG, "send g");
+                        } else if(movementNeeded.x < 0){
+                            urbotBluetoothService.sendData("d");
+                            Log.d(TAG, "send d");
+                        }
+
+                        if (movementNeeded.y > 0) {
+                            urbotBluetoothService.sendData("h");
+                            Log.d(TAG, "send h");
+                        } else if(movementNeeded.y < 0){
+                            urbotBluetoothService.sendData("b");
+                            Log.d(TAG, "send b");
+                        }
+                    } catch (IOException e) {
+                        Log.d(TAG, "IOException sending data", e);
+                    }
+                }
             }
         }, 0, 1000);
     }

@@ -29,6 +29,9 @@ public class UrbotBluetoothService extends Service {
     private OutputStream mOutputStream;
     private InputStream mInputStream;
     private final IBinder mBinder = new LocalBinder();
+    private boolean bluetoothRequestAction = false;
+
+    private boolean bluetoothConnected = false;
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -82,21 +85,41 @@ public class UrbotBluetoothService extends Service {
         return mBinder;
     }
 
+    public void toggleBluetoothAction()
+    {
+        bluetoothRequestAction = (!bluetoothRequestAction);
+    }
+
     public void startBluetooth()
     {
-        Log.d(TAG, "Starting bluetooth");
-        // Inscrire le BroadcastReceiver
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        this.getApplication().registerReceiver(receiver, filter);
+        if(!bluetoothConnected) {
+            Log.d(TAG, "Starting bluetooth");
 
-        if (!mBluetoothAdapter.isEnabled()) {
-            // TODO if user say no, close the appli
-            Intent btIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            btIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            getApplicationContext().startActivity(btIntent);
+            // Inscrire le BroadcastReceiver
+            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+            this.getApplication().registerReceiver(receiver, filter);
+
+            if (!mBluetoothAdapter.isEnabled()) {
+                // TODO if user say no, close the appli
+                Intent btIntent;
+
+                if(bluetoothRequestAction) {
+                    btIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    btIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    getApplicationContext().startActivity(btIntent);
+                } else {
+                    mBluetoothAdapter.enable();
+                    //btIntent = new Intent(BluetoothAdapter.);
+                }
+
+            }
+
+            mBluetoothAdapter.startDiscovery();
         }
-
-        mBluetoothAdapter.startDiscovery();
+        else
+        {
+            Log.d(TAG, "Bluetooth is already connected");
+        }
     }
 
     private void openConnexion() throws IOException
@@ -109,6 +132,8 @@ public class UrbotBluetoothService extends Service {
             mSocket.connect();
             mOutputStream = mSocket.getOutputStream();
             mInputStream = mSocket.getInputStream();
+
+            bluetoothConnected = true;
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -126,6 +151,8 @@ public class UrbotBluetoothService extends Service {
         Log.d(TAG, "Closing bluetooth");
 
         try {
+            bluetoothConnected = false;
+
             mBluetoothAdapter.cancelDiscovery();
             mBluetoothAdapter.disable();
             getApplication().unregisterReceiver(receiver);
@@ -147,9 +174,12 @@ public class UrbotBluetoothService extends Service {
     {
         try
         {
-            Log.d(TAG, "Sending data");
-            message += "\n";
-            mOutputStream.write(message.getBytes());
+            if(bluetoothConnected)
+            {
+                Log.d(TAG, "Sending data");
+                message += "\n";
+                mOutputStream.write(message.getBytes());
+            }
         }
         catch (Exception e)
         {
