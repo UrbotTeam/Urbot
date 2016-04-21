@@ -12,6 +12,7 @@ import android.view.Display;
 import android.view.WindowManager;
 
 import com.google.android.gms.common.images.Size;
+import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.face.Face;
 
 import java.io.IOException;
@@ -20,11 +21,15 @@ import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import fr.urbotteam.urbot.Bluetooth.UrbotBluetoothService;
+
 public class CameraService extends Service {
     // TODO Make a service out of the fragment
     private volatile LinkedList<Face> mFaces = new LinkedList();
     private Point center = new Point();
     private Timer scheduledTimer;
+    private UrbotBluetoothService urbotBluetoothService;
+    private CameraSource mCameraSource;
 
     private static final String TAG = "CameraDebug";
 
@@ -34,12 +39,32 @@ public class CameraService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d(TAG, "onCreate CameraService");
     }
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy CameraService");
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "onStartCommand CameraService");
+        processCentre();
+        return START_NOT_STICKY;
+    }
+
+    public void init(UrbotBluetoothService urbotBluetoothService, CameraSource cameraSource)
+    {
+        this.urbotBluetoothService = urbotBluetoothService;
+        this.mCameraSource = cameraSource;
     }
 
     //==============================================================================================

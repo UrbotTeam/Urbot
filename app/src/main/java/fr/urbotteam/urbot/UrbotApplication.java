@@ -17,7 +17,7 @@ public class UrbotApplication extends Application {
         if (mBluetoothAdapter == null) {
             // Device does not support Bluetooth
         } else {
-            if (mBluetoothAdapter.isEnabled()) {
+            if (!mBluetoothAdapter.isEnabled()) {
                 keepBluetooth = true;
             }
         }

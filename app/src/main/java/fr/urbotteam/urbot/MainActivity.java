@@ -33,6 +33,7 @@ public class MainActivity extends Activity {
     private Context mContext;
     private CameraSource mCameraSource;
     private LinkedList<Face> mFaces = new LinkedList<>();
+    private CameraService mCameraService;
     private UrbotBluetoothService urbotBluetoothService;
     private boolean mBound;
 
@@ -48,23 +49,31 @@ public class MainActivity extends Activity {
         mContext = getApplicationContext();
 
         if (null == savedInstanceState) {
-            getFragmentManager().beginTransaction()
+            /*getFragmentManager().beginTransaction()
                     .replace(R.id.container, CameraFragment.newInstance())
-                    .commit();
+                    .commit();*/
+
+            // Check for the camera permission before accessing the camera.  If the
+            // permission is not granted yet, request permission.
+            int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+            if (rc == PackageManager.PERMISSION_GRANTED) {
+                createCameraSource();
+                Log.d(TAG, "onCreate CreateCameraSource");
+            } else {
+                Log.d(TAG, "onCreate RequestCameraPermission");
+                requestCameraPermission();
+            }
+
+            Intent intent = new Intent(this, UrbotBluetoothService.class);
+            bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+
+            intent = new Intent(this, CameraService.class);
+            startService(intent);
         }
-
-
-        // Check for the camera permission before accessing the camera.  If the
-        // permission is not granted yet, request permission.
-        int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
-        if (rc == PackageManager.PERMISSION_GRANTED) {
-            createCameraSource();
-        } else {
-            requestCameraPermission();
+        else
+        {
+            Log.d(TAG, "onCreate savedInstanceState non null");
         }
-
-        Intent intent = new Intent(this, UrbotBluetoothService.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     /**
@@ -156,6 +165,8 @@ public class MainActivity extends Activity {
                 .setFacing(CameraSource.CAMERA_FACING_FRONT)
                 .setRequestedFps(30.0f)
                 .build();
+
+        startCameraSource();
     }
 
     private boolean isPortraitMode() {
@@ -236,6 +247,7 @@ public class MainActivity extends Activity {
     private class GraphicFaceTrackerFactory implements MultiProcessor.Factory<Face> {
         @Override
         public Tracker<Face> create(Face face) {
+            Log.d(TAG, "create New face");
             return new GraphicFaceTracker();
         }
     }

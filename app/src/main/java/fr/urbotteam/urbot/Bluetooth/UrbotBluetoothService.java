@@ -29,7 +29,7 @@ public class UrbotBluetoothService extends Service {
     private OutputStream mOutputStream;
     private InputStream mInputStream;
     private final IBinder mBinder = new LocalBinder();
-    private boolean bluetoothRequestAction = false;
+    private boolean bluetoothRequestAction = true;
 
     private boolean bluetoothConnected = false;
 
