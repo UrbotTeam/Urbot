@@ -17,8 +17,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
+import fr.urbotteam.urbot.UrbotApplication;
+
 /**
  * Created by paul on 4/18/16.
+ * Bluetooth service
+ * Connects to the arduino and handle messaging
  */
 public class UrbotBluetoothService extends Service {
     private static final String TAG = "CameraDebug";
@@ -124,7 +128,11 @@ public class UrbotBluetoothService extends Service {
             bluetoothConnected = false;
 
             mBluetoothAdapter.cancelDiscovery();
-            mBluetoothAdapter.disable();
+
+            if(!((UrbotApplication)getApplication()).isKeepBluetooth()) {
+                mBluetoothAdapter.disable();
+            }
+
             getApplication().unregisterReceiver(receiver);
 
             if (mOutputStream != null)

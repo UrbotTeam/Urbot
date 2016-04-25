@@ -48,7 +48,7 @@ public class UrbotActivity extends Activity {
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.ic_launcher)
                         .setContentTitle("Urbot")
-                        .setContentText("Running");
+                        .setContentText("Click to stop");
 
         mBuilder.setOngoing(true);
         mBuilder.setAutoCancel(true);
