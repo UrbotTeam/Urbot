@@ -11,7 +11,8 @@ import android.util.Log;
 
 import fr.urbotteam.urbot.Bluetooth.UrbotBluetoothService;
 
-public class MainActivity extends Activity {
+public class UrbotActivity extends Activity {
+    // TODO : - Notification bar
 
     private static final String TAG = "CameraDebug";
     private CameraService mCameraService;
@@ -19,23 +20,16 @@ public class MainActivity extends Activity {
     private boolean mBound;
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.fragment_camera);
 
-        if (null == savedInstanceState) {
-            Intent intent = new Intent(this, UrbotBluetoothService.class);
-            bindService(intent, mBluetoothConnection, Context.BIND_AUTO_CREATE);
+        Intent intent = new Intent(this, UrbotBluetoothService.class);
+        bindService(intent, mBluetoothConnection, Context.BIND_AUTO_CREATE);
 
-            intent = new Intent(this, CameraService.class);
-            bindService(intent, mCameraConnection, Context.BIND_AUTO_CREATE);
-        }
-        else
-        {
-            Log.d(TAG, "onCreate savedInstanceState non null");
-        }
+        intent = new Intent(this, CameraService.class);
+        bindService(intent, mCameraConnection, Context.BIND_AUTO_CREATE);
     }
 
     /**
@@ -47,14 +41,15 @@ public class MainActivity extends Activity {
         super.onDestroy();
 
         try {
+            if (mBound) {
+                unbindService(mBluetoothConnection);
+                unbindService(mCameraConnection);
+                mBound = false;
+            }
+
             if (((UrbotApplication) getApplication()).isKeepBluetooth()) {
                 if (urbotBluetoothService != null) {
                     urbotBluetoothService.closeBluetooth();
-
-                    if (mBound) {
-                        unbindService(mBluetoothConnection);
-                        mBound = false;
-                    }
                 }
             }
         } catch (ClassCastException e) {
@@ -74,6 +69,7 @@ public class MainActivity extends Activity {
             UrbotBluetoothService.LocalBinder binder = (UrbotBluetoothService.LocalBinder) service;
             urbotBluetoothService = binder.getService();
             urbotBluetoothService.startBluetooth();
+
             mBound = true;
         }
 
@@ -91,10 +87,12 @@ public class MainActivity extends Activity {
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
             Log.d(TAG, "Camera service connected");
+
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             CameraService.LocalBinder binder = (CameraService.LocalBinder) service;
             mCameraService = binder.getService();
             mCameraService.init(urbotBluetoothService);
+
             mBound = true;
         }
 

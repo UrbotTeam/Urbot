@@ -22,7 +22,7 @@ public class UrbotApplication extends Application {
             }
         }
 
-        MainActivity urbotActivity = new MainActivity();
+        UrbotActivity urbotActivity = new UrbotActivity();
     }
 
     public boolean isKeepBluetooth() {

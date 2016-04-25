@@ -53,7 +53,6 @@ public class CameraService extends Service {
         int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
         if (rc == PackageManager.PERMISSION_GRANTED) {
             createCameraSource();
-            Log.d(TAG, "onCreate CreateCameraSource CameraService");
         } else {
             Log.d(TAG, "Camera service permission denied");
             //requestCameraPermission();
@@ -70,19 +69,22 @@ public class CameraService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "onDestroy CameraService");
+
+        scheduledTimer.cancel();
+        scheduledTimer.purge();
+
+        mCameraSource.stop();
+        mCameraSource.release();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand CameraService");
         return START_NOT_STICKY;
     }
 
     public void init(UrbotBluetoothService urbotBluetoothService)
     {
         this.urbotBluetoothService = urbotBluetoothService;
-        Log.d(TAG, "init CameraService");
 
         try {
             mCameraSource.start();
@@ -135,13 +137,19 @@ public class CameraService extends Service {
                 .build();
     }
 
+    public CameraSource getmCameraSource()
+    {
+        return this.mCameraSource;
+    }
+
+
     //==============================================================================================
-    // Camera Source Preview
+    // Computing movement needed to center the faces
     //==============================================================================================
 
     private void processCentre() {
         scheduledTimer = new Timer();
-        //TODO changer service bluetooth to IntentService
+
         scheduledTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -231,7 +239,6 @@ public class CameraService extends Service {
             Log.d(TAG, "isPortraitMode ", e);
         }
 
-        Log.d(TAG, "isPortraitMode returning false by default");
         return false;
     }
 

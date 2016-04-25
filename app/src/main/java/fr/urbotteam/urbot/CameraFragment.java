@@ -39,7 +39,6 @@ import java.util.TimerTask;
 import fr.urbotteam.urbot.Bluetooth.UrbotBluetoothService;
 
 public class CameraFragment extends Fragment {
-    // TODO Make a service out of the fragment
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
     private GraphicOverlay mGraphicOverlay;
@@ -58,7 +57,6 @@ public class CameraFragment extends Fragment {
 
     private static final String TAG = "CameraDebug";
 
-    // TODO remove this function
     private void showToast(final String text) {
         final Activity activity = getActivity();
         if (activity != null) {

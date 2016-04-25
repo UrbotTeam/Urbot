@@ -29,7 +29,6 @@ public class UrbotBluetoothService extends Service {
     private OutputStream mOutputStream;
     private InputStream mInputStream;
     private final IBinder mBinder = new LocalBinder();
-    private boolean bluetoothRequestAction = true;
 
     private boolean bluetoothConnected = false;
 
@@ -64,7 +63,10 @@ public class UrbotBluetoothService extends Service {
 
     @Override
     public void onDestroy() {
+        super.onDestroy();
         closeBluetooth();
+
+        Log.d(TAG, "onDestroy UrbotBluetoothService");
     }
 
     @Override
@@ -78,10 +80,6 @@ public class UrbotBluetoothService extends Service {
         return mBinder;
     }
 
-    public void toggleBluetoothAction() {
-        bluetoothRequestAction = (!bluetoothRequestAction);
-    }
-
     public void startBluetooth() {
         if (!bluetoothConnected) {
             Log.d(TAG, "Starting bluetooth");
@@ -91,18 +89,7 @@ public class UrbotBluetoothService extends Service {
             this.getApplication().registerReceiver(receiver, filter);
 
             if (!mBluetoothAdapter.isEnabled()) {
-                // TODO if user say no, close the appli
-                Intent btIntent;
-
-                if (bluetoothRequestAction) {
-                    btIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                    btIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    getApplicationContext().startActivity(btIntent);
-                } else {
-                    mBluetoothAdapter.enable();
-                    //btIntent = new Intent(BluetoothAdapter.);
-                }
-
+                mBluetoothAdapter.enable();
             }
 
             mBluetoothAdapter.startDiscovery();
