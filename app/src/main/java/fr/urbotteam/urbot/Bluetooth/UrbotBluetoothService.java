@@ -42,10 +42,10 @@ public class UrbotBluetoothService extends Service {
 
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                Log.d(TAG, "Found device : " + device.getName());
+                Log.v(TAG, "Found device : " + device.getName());
 
                 if (device.getName() != null && device.getName().equals("CVBT_B")) {
-                    Log.d(TAG, "Found arduino device");
+                    Log.i(TAG, "Found arduino device");
                     mDevice = device;
                     mBluetoothAdapter.cancelDiscovery();
 
@@ -84,7 +84,7 @@ public class UrbotBluetoothService extends Service {
 
     public void startBluetooth() {
         if (!bluetoothConnected) {
-            Log.d(TAG, "Starting bluetooth");
+            Log.i(TAG, "Starting bluetooth");
 
             // Inscrire le BroadcastReceiver
             IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -96,7 +96,7 @@ public class UrbotBluetoothService extends Service {
 
             mBluetoothAdapter.startDiscovery();
         } else {
-            Log.d(TAG, "Bluetooth is already connected");
+            Log.v(TAG, "Bluetooth is already connected");
         }
     }
 
@@ -120,7 +120,7 @@ public class UrbotBluetoothService extends Service {
     }
 
     public void closeBluetooth() {
-        Log.d(TAG, "Closing bluetooth");
+        Log.i(TAG, "Closing bluetooth");
 
         try {
             bluetoothConnected = false;
@@ -147,7 +147,7 @@ public class UrbotBluetoothService extends Service {
     public void sendData(String message) throws IOException {
         try {
             if (bluetoothConnected) {
-                Log.d(TAG, "Sending data");
+                Log.i(TAG, "Sending data");
                 message += "\n";
                 mOutputStream.write(message.getBytes());
             }

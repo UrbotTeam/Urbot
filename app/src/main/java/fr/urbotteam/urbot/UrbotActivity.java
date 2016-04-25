@@ -106,7 +106,7 @@ public class UrbotActivity extends Activity {
 
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
-            Log.d(TAG, "Bluetooth service connected");
+            Log.v(TAG, "Bluetooth service connected");
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             UrbotBluetoothService.LocalBinder binder = (UrbotBluetoothService.LocalBinder) service;
             urbotBluetoothService = binder.getService();
@@ -128,7 +128,7 @@ public class UrbotActivity extends Activity {
 
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
-            Log.d(TAG, "Camera service connected");
+            Log.v(TAG, "Camera service connected");
 
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             CameraService.LocalBinder binder = (CameraService.LocalBinder) service;

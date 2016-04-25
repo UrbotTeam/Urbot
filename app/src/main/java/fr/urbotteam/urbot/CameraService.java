@@ -54,7 +54,7 @@ public class CameraService extends Service {
         if (rc == PackageManager.PERMISSION_GRANTED) {
             createCameraSource();
         } else {
-            Log.d(TAG, "Camera service permission denied");
+            Log.e(TAG, "Camera service permission denied");
             //requestCameraPermission();
         }
     }
@@ -74,6 +74,8 @@ public class CameraService extends Service {
 
         mCameraSource.stop();
         mCameraSource.release();
+
+        Log.i(TAG, "Stopping camera");
     }
 
     @Override
