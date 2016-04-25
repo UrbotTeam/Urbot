@@ -57,7 +57,6 @@ public class CameraService extends Service {
             Log.d(TAG, "Camera service permission denied");
             //requestCameraPermission();
         }
-        Log.d(TAG, "onCreate CameraService");
     }
 
     @Nullable
@@ -136,12 +135,6 @@ public class CameraService extends Service {
                 .setRequestedFps(30.0f)
                 .build();
     }
-
-    public CameraSource getmCameraSource()
-    {
-        return this.mCameraSource;
-    }
-
 
     //==============================================================================================
     // Computing movement needed to center the faces

@@ -69,8 +69,6 @@ public class UrbotBluetoothService extends Service {
     public void onDestroy() {
         super.onDestroy();
         closeBluetooth();
-
-        Log.d(TAG, "onDestroy UrbotBluetoothService");
     }
 
     @Override

@@ -2,7 +2,6 @@ package fr.urbotteam.urbot;
 
 import android.app.Application;
 import android.bluetooth.BluetoothAdapter;
-import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -23,7 +22,6 @@ public class UrbotApplication extends Application {
             Toast.makeText(this.getApplicationContext(), "Device does not support bluetooth", Toast.LENGTH_SHORT).show();
         } else {
             if (mBluetoothAdapter.isEnabled()) {
-                Log.d("CameraDebug", "onCreate Application keep bluetooth");
                 keepBluetooth = true;
             }
 
