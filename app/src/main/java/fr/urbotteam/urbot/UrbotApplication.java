@@ -10,6 +10,9 @@ import android.widget.Toast;
  * Starts if bluetooth is supported
  */
 public class UrbotApplication extends Application {
+    /**
+     * Save if the bluetooth was activated before the app launched
+     */
     private boolean keepBluetooth = false;
 
     @Override
@@ -29,6 +32,10 @@ public class UrbotApplication extends Application {
         }
     }
 
+    /**
+     *
+     * @return true if bluetooth was on before the app, false otherwise
+     */
     public boolean isKeepBluetooth() {
         return this.keepBluetooth;
     }

@@ -34,6 +34,10 @@ public class UrbotBluetoothService extends Service {
 
     private boolean bluetoothConnected = false;
 
+    /**
+     * Handle the devices discovered by the bluetooth broadcast.
+     * If the device is the arduino, open the connexion.
+     */
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -58,11 +62,19 @@ public class UrbotBluetoothService extends Service {
         }
     };
 
+    /**
+     * When the service is created.
+     * Gets the default bluetooth adapter.
+     */
     @Override
     public void onCreate() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
+    /**
+     * When the service is destroyed.
+     * Removes the receiver and closes the bluetooth connexion.
+     */
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -71,6 +83,13 @@ public class UrbotBluetoothService extends Service {
         closeBluetooth();
     }
 
+    /**
+     *
+     * @param intent
+     * @param flags
+     * @param startId
+     * @return The state of the service
+     */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         turnOnBluetooth();
@@ -79,11 +98,19 @@ public class UrbotBluetoothService extends Service {
         return START_STICKY;
     }
 
+    /**
+     *
+     * @param intent
+     * @return
+     */
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
     }
 
+    /**
+     * Activates the bluetooth and registers the receiver
+     */
     public void turnOnBluetooth()
     {
         Log.i(TAG, "Starting bluetooth");
@@ -101,6 +128,9 @@ public class UrbotBluetoothService extends Service {
         }
     }
 
+    /**
+     * Starts the bluetooth discovery if not connected yet.
+     */
     public void startDiscovery() {
         if (!bluetoothConnected) {
             try {
@@ -115,6 +145,10 @@ public class UrbotBluetoothService extends Service {
         }
     }
 
+    /**
+     * Connects to the arduino device
+     * @throws IOException
+     */
     private void openConnexion() throws IOException {
         UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"); //Standard SerialPortService ID
         mSocket = mDevice.createRfcommSocketToServiceRecord(uuid);
@@ -134,6 +168,9 @@ public class UrbotBluetoothService extends Service {
         }
     }
 
+    /**
+     * Closes the bluetooth connexion
+     */
     public void closeBluetooth() {
         Log.i(TAG, "Closing bluetooth");
 
@@ -157,6 +194,11 @@ public class UrbotBluetoothService extends Service {
         }
     }
 
+    /**
+     * Sends data to the arduino device
+     * @param message Data to send
+     * @throws IOException
+     */
     public void sendData(String message) throws IOException {
         try {
             if (bluetoothConnected) {
@@ -170,6 +212,9 @@ public class UrbotBluetoothService extends Service {
         }
     }
 
+    /**
+     * ocal binder to give access to public method to another activity
+     */
     public class LocalBinder extends Binder {
         public UrbotBluetoothService getService() {
             // Return this instance of LocalService so clients can call public methods

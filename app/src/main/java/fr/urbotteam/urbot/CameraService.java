@@ -40,7 +40,7 @@ public class CameraService extends Service {
     private static final String TAG = "CameraDebug";
 
     /**
-     * Initializes the UI and initiates the creation of a face detector.
+     * Checks for permissions and initiates the creation of the camera.
      */
     @Override
     public void onCreate() {
@@ -57,12 +57,20 @@ public class CameraService extends Service {
         }
     }
 
+    /**
+     *
+     * @param intent
+     * @return mBinder
+     */
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
     }
 
+    /**
+     * Stops the scheduled timer and releases the camera
+     */
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -76,11 +84,22 @@ public class CameraService extends Service {
         Log.i(TAG, "Stopping camera");
     }
 
+    /**
+     *
+     * @param intent
+     * @param flags
+     * @param startId
+     * @return The state of the service
+     */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         return START_NOT_STICKY;
     }
 
+    /**
+     * Starts the camera and the position computing
+     * @param urbotBluetoothService The bluetooth service needed to send data
+     */
     public void init(UrbotBluetoothService urbotBluetoothService)
     {
         Log.i(TAG, "Starting camera");
@@ -96,6 +115,9 @@ public class CameraService extends Service {
         }
     }
 
+    /**
+     * Local binder to give access to public method to another activity
+     */
     public class LocalBinder extends Binder {
         public CameraService getService() {
             // Return this instance of LocalService so clients can call public methods
@@ -104,9 +126,7 @@ public class CameraService extends Service {
     }
 
     /**
-     * Creates and starts the camera.  Note that this uses a higher resolution in comparison
-     * to other detection examples to enable the barcode detector to detect small barcodes
-     * at long distances.
+     * Creates the camera with the size of the screen with 30fps.
      */
     private void createCameraSource() {
         FaceDetector detector = new FaceDetector.Builder(this)
@@ -141,57 +161,67 @@ public class CameraService extends Service {
     // Computing movement needed to center the faces
     //==============================================================================================
 
+    /**
+     * Starts a scheduled timer who computes the center of gravity of people on the screen and send
+     * the movement needed to center it on screen via the bluetooth service
+     */
     private void processCentre() {
         scheduledTimer = new Timer();
 
         scheduledTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if (urbotBluetoothService != null && mFaces.size() != 0) {
-                    Iterator<Face> iterator = mFaces.iterator();
-                    Face face;
-                    float x = 0, y = 0;
-                    int size = mFaces.size();
+            if (urbotBluetoothService != null && mFaces.size() != 0) {
+                Iterator<Face> iterator = mFaces.iterator();
+                Face face;
+                float x = 0, y = 0;
+                int size = mFaces.size();
 
-                    while (iterator.hasNext()) {
-                        face = iterator.next();
-                        PointF facePosition = face.getPosition();
+                while (iterator.hasNext()) {
+                    face = iterator.next();
+                    PointF facePosition = face.getPosition();
 
-                        Display display = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
-                        x += display.getWidth() - (facePosition.x + face.getWidth() / 2); // Because camera is mirrored
-                        y += facePosition.y + face.getHeight() / 2;
-                    }
-
-                    x /= size;
-                    y /= size;
-
-                    center.set((int) x, (int) y);
-                    Point movementNeeded = getMovementNeeded(center);
-
-                    try {
-                        if (movementNeeded.x > 0) {
-                            urbotBluetoothService.sendData("g");
-                            Log.d(TAG, "send g");
-                        } else if (movementNeeded.x < 0) {
-                            urbotBluetoothService.sendData("d");
-                            Log.d(TAG, "send d");
-                        }
-
-                        if (movementNeeded.y > 0) {
-                            urbotBluetoothService.sendData("h");
-                            Log.d(TAG, "send h");
-                        } else if (movementNeeded.y < 0) {
-                            urbotBluetoothService.sendData("b");
-                            Log.d(TAG, "send b");
-                        }
-                    } catch (IOException e) {
-                        Log.d(TAG, "IOException sending data", e);
-                    }
+                    Display display = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
+                    x += display.getWidth() - (facePosition.x + face.getWidth() / 2); // Because camera is mirrored
+                    y += facePosition.y + face.getHeight() / 2;
                 }
+
+                x /= size;
+                y /= size;
+                center.set((int) x, (int) y);   // Center of gravity
+
+                Point movementNeeded = getMovementNeeded(center);
+
+                try {
+                    if (movementNeeded.x > 0) {
+                        urbotBluetoothService.sendData("g");
+                        Log.d(TAG, "send g");
+                    } else if (movementNeeded.x < 0) {
+                        urbotBluetoothService.sendData("d");
+                        Log.d(TAG, "send d");
+                    }
+
+                    if (movementNeeded.y > 0) {
+                        urbotBluetoothService.sendData("h");
+                        Log.d(TAG, "send h");
+                    } else if (movementNeeded.y < 0) {
+                        urbotBluetoothService.sendData("b");
+                        Log.d(TAG, "send b");
+                    }
+                } catch (IOException e) {
+                    Log.d(TAG, "IOException sending data", e);
+                }
+            }
             }
         }, 0, 1000);
     }
 
+    /**
+     * Computes the movement needed to center the people on screen.
+     * There is a margin of 50 pixels around the center.
+     * @param center The center of gravity
+     * @return The movement needed in pixels, (0,0) if nothing is needed
+     */
     public Point getMovementNeeded(Point center) {
         Size size = mCameraSource.getPreviewSize();
 
@@ -209,10 +239,12 @@ public class CameraService extends Service {
             movementLeft = center.x - w;
             movementTop = center.y - h;
 
-            if (movementLeft > -margin && movementLeft < margin)
+            if (movementLeft > -margin && movementLeft < margin) {
                 movementLeft = 0;
-            if (movementTop > -margin && movementTop < margin)
+            }
+            if (movementTop > -margin && movementTop < margin) {
                 movementTop = 0;
+            }
 
             return new Point((int) movementLeft, (int) movementTop);
         }
@@ -220,6 +252,10 @@ public class CameraService extends Service {
         return new Point();
     }
 
+    /**
+     *
+     * @return true if portrait, false if landscape
+     */
     private boolean isPortraitMode() {
         try {
             int orientation = getResources().getConfiguration().orientation;

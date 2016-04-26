@@ -25,22 +25,24 @@ public class UrbotActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.fragment_camera);
+        setContentView(R.layout.urbot_main_layout);
 
         if(savedInstanceState == null) {
+            // Starts the bluetooth service
             Intent intent = new Intent(this, UrbotBluetoothService.class);
             bindService(intent, mBluetoothConnection, Context.BIND_AUTO_CREATE);
 
+            // Starts the camera service
             intent = new Intent(this, CameraService.class);
             bindService(intent, mCameraConnection, Context.BIND_AUTO_CREATE);
 
             initNotification();
-        } else {
-            Log.d(TAG, "onCreate savedInstanceState non null");
         }
     }
 
-    // Create Notification
+    /**
+     * Create a notification in the notification bar
+     */
     private void initNotification() {
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
@@ -48,8 +50,8 @@ public class UrbotActivity extends Activity {
                         .setContentTitle("Urbot")
                         .setContentText("Click to stop");
 
-        mBuilder.setOngoing(true);
-        mBuilder.setAutoCancel(true);
+        mBuilder.setOngoing(true); // User cannot remove it via the clear all button
+        mBuilder.setAutoCancel(true); // Notification is automatically removed when clicked
 
         //Register a receiver to stop Service
         registerReceiver(stopServiceReceiver, new IntentFilter("myFilter"));
@@ -64,23 +66,23 @@ public class UrbotActivity extends Activity {
     }
 
 
-    //We need to declare the receiver with onReceive function as below
+    /**
+     * Stops the application when the notification is clicked
+     */
     protected BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             finish();
-            Log.d(TAG, "onReceive finish");
         }
     };
 
     /**
      * Releases the resources associated with the camera source, the associated detector, and the
-     * rest of the processing pipeline.
+     * rest of the processing pipeline such as the bluetooth.
      */
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "onDestroy application");
 
         unregisterReceiver(stopServiceReceiver);
 
