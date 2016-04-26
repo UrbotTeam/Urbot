@@ -29,8 +29,6 @@ import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import fr.urbotteam.urbot.Bluetooth.UrbotBluetoothService;
-
 public class CameraService extends Service {
     private volatile LinkedList<Face> mFaces = new LinkedList<>();
     private Point center = new Point();

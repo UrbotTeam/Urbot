@@ -16,7 +16,7 @@
         android:theme="@style/AppTheme"
         android:name=".UrbotApplication" >
 
-        <service android:name=".Bluetooth.UrbotBluetoothService" android:exported="false" />
+        <service android:name=".UrbotBluetoothService" android:exported="false" />
         <service android:name=".CameraService" android:exported="false" />
 
         <activity

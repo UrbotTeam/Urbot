@@ -1,4 +1,4 @@
-package fr.urbotteam.urbot.Bluetooth;
+package fr.urbotteam.urbot;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
-
-import fr.urbotteam.urbot.UrbotApplication;
 
 /**
  * Created by paul on 4/18/16.

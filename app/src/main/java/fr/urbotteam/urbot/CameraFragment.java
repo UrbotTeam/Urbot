@@ -36,8 +36,6 @@ import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import fr.urbotteam.urbot.Bluetooth.UrbotBluetoothService;
-
 public class CameraFragment extends Fragment {
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;

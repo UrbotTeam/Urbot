@@ -14,8 +14,6 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import fr.urbotteam.urbot.Bluetooth.UrbotBluetoothService;
-
 public class UrbotActivity extends Activity {
     private static final String TAG = "CameraDebug";
     private CameraService mCameraService;
