@@ -85,6 +85,7 @@ public class CameraService extends Service {
 
     public void init(UrbotBluetoothService urbotBluetoothService)
     {
+        Log.i(TAG, "Starting camera");
         this.urbotBluetoothService = urbotBluetoothService;
 
         try {

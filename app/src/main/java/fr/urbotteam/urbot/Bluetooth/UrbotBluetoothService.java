@@ -68,12 +68,16 @@ public class UrbotBluetoothService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        getApplication().unregisterReceiver(receiver);
         closeBluetooth();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startBluetooth();
+        turnOnBluetooth();
+        startDiscovery();
+
         return START_STICKY;
     }
 
@@ -82,19 +86,32 @@ public class UrbotBluetoothService extends Service {
         return mBinder;
     }
 
-    public void startBluetooth() {
+    public void turnOnBluetooth()
+    {
+        Log.i(TAG, "Starting bluetooth");
+
+        // Inscrire le BroadcastReceiver
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        this.getApplication().registerReceiver(receiver, filter);
+
+        if (!mBluetoothAdapter.isEnabled()) {
+            mBluetoothAdapter.enable();
+        }
+
+        if (mBluetoothAdapter.isDiscovering()) {
+            mBluetoothAdapter.cancelDiscovery();
+        }
+    }
+
+    public void startDiscovery() {
         if (!bluetoothConnected) {
-            Log.i(TAG, "Starting bluetooth");
-
-            // Inscrire le BroadcastReceiver
-            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            this.getApplication().registerReceiver(receiver, filter);
-
-            if (!mBluetoothAdapter.isEnabled()) {
-                mBluetoothAdapter.enable();
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
-            mBluetoothAdapter.startDiscovery();
+            Log.d(TAG, "Starting discovery : " + mBluetoothAdapter.startDiscovery());
         } else {
             Log.v(TAG, "Bluetooth is already connected");
         }
@@ -130,8 +147,6 @@ public class UrbotBluetoothService extends Service {
             if(!((UrbotApplication)getApplication()).isKeepBluetooth()) {
                 mBluetoothAdapter.disable();
             }
-
-            getApplication().unregisterReceiver(receiver);
 
             if (mOutputStream != null)
                 mOutputStream.close();

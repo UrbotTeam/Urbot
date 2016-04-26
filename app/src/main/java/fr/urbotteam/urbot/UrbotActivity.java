@@ -30,11 +30,11 @@ public class UrbotActivity extends Activity {
         setContentView(R.layout.fragment_camera);
 
         if(savedInstanceState == null) {
-            Intent intent = new Intent(this, UrbotBluetoothService.class);
-            bindService(intent, mBluetoothConnection, Context.BIND_AUTO_CREATE);
-
-            intent = new Intent(this, CameraService.class);
+            Intent intent = new Intent(this, CameraService.class);
             bindService(intent, mCameraConnection, Context.BIND_AUTO_CREATE);
+
+            intent = new Intent(this, UrbotBluetoothService.class);
+            bindService(intent, mBluetoothConnection, Context.BIND_AUTO_CREATE);
 
             initNotification();
         } else {
@@ -71,6 +71,7 @@ public class UrbotActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             finish();
+            Log.d(TAG, "onReceive finish");
         }
     };
 
@@ -81,6 +82,9 @@ public class UrbotActivity extends Activity {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.d(TAG, "onDestroy application");
+
+        unregisterReceiver(stopServiceReceiver);
 
         try {
             if (mBound) {
@@ -110,7 +114,8 @@ public class UrbotActivity extends Activity {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             UrbotBluetoothService.LocalBinder binder = (UrbotBluetoothService.LocalBinder) service;
             urbotBluetoothService = binder.getService();
-            urbotBluetoothService.startBluetooth();
+            urbotBluetoothService.turnOnBluetooth();
+            urbotBluetoothService.startDiscovery();
 
             mBound = true;
         }

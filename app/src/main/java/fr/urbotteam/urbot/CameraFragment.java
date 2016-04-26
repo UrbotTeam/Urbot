@@ -129,7 +129,9 @@ public class CameraFragment extends Fragment {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             UrbotBluetoothService.LocalBinder binder = (UrbotBluetoothService.LocalBinder) service;
             urbotBluetoothService = binder.getService();
-            urbotBluetoothService.startBluetooth();
+            urbotBluetoothService.turnOnBluetooth();
+            urbotBluetoothService.startDiscovery();
+
             mBound = true;
         }
 
