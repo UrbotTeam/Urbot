@@ -195,18 +195,14 @@ public class CameraService extends Service {
                 try {
                     if (movementNeeded.x > 0) {
                         urbotBluetoothService.sendData("g");
-                        Log.d(TAG, "send g");
                     } else if (movementNeeded.x < 0) {
                         urbotBluetoothService.sendData("d");
-                        Log.d(TAG, "send d");
                     }
 
                     if (movementNeeded.y > 0) {
                         urbotBluetoothService.sendData("h");
-                        Log.d(TAG, "send h");
                     } else if (movementNeeded.y < 0) {
                         urbotBluetoothService.sendData("b");
-                        Log.d(TAG, "send b");
                     }
                 } catch (IOException e) {
                     Log.d(TAG, "IOException sending data", e);
