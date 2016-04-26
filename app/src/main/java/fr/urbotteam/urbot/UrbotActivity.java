@@ -28,11 +28,11 @@ public class UrbotActivity extends Activity {
         setContentView(R.layout.fragment_camera);
 
         if(savedInstanceState == null) {
-            Intent intent = new Intent(this, CameraService.class);
-            bindService(intent, mCameraConnection, Context.BIND_AUTO_CREATE);
-
-            intent = new Intent(this, UrbotBluetoothService.class);
+            Intent intent = new Intent(this, UrbotBluetoothService.class);
             bindService(intent, mBluetoothConnection, Context.BIND_AUTO_CREATE);
+
+            intent = new Intent(this, CameraService.class);
+            bindService(intent, mCameraConnection, Context.BIND_AUTO_CREATE);
 
             initNotification();
         } else {

@@ -160,7 +160,7 @@ public class UrbotBluetoothService extends Service {
     public void sendData(String message) throws IOException {
         try {
             if (bluetoothConnected) {
-                Log.i(TAG, "Sending data");
+                Log.i(TAG, "Sending data : " + message);
                 message += "\n";
                 mOutputStream.write(message.getBytes());
             }
