@@ -38,14 +38,22 @@ public class UrbotActivity extends Activity {
                 @Override
                 public void onClick(View v) {
                     if(urbotBluetoothService != null && mCameraService != null) {
+                        Toast.makeText(getApplicationContext(),
+                                "Restarting bluetooth", Toast.LENGTH_SHORT)
+                                .show();
+
                         urbotBluetoothService.closeBluetooth();
+
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
                         urbotBluetoothService.turnOnBluetooth();
                         urbotBluetoothService.startDiscovery();
 
                         mCameraService.init(urbotBluetoothService);
-                        Toast.makeText(getApplicationContext(),
-                                "Restarting bluetooth", Toast.LENGTH_SHORT)
-                                .show();
                     }
                 }
             });

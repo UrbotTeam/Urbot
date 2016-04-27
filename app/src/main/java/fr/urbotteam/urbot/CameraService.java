@@ -170,7 +170,6 @@ public class CameraService extends Service {
         scheduledTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                Log.d(TAG, "run start process : " + mFaces.size());
             if (urbotBluetoothService != null && mFaces.size() != 0) {
                 Iterator<Face> iterator = mFaces.iterator();
                 Face face;
