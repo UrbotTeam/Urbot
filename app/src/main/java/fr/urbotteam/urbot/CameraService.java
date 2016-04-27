@@ -160,10 +160,9 @@ public class CameraService extends Service {
     //==============================================================================================
     // Computing movement needed to center the faces
     //==============================================================================================
-
     /**
-     * Starts a scheduled timer who computes the center of gravity of people on the screen and send
-     * the movement needed to center it on screen via the bluetooth service
+     * Starts a scheduled timer of 0.5s who computes the center of gravity of people on the screen
+     * and send the movement needed to center it on screen via the bluetooth service
      */
     private void processCentre() {
         scheduledTimer = new Timer();
@@ -171,6 +170,7 @@ public class CameraService extends Service {
         scheduledTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                Log.d(TAG, "run start process : " + mFaces.size());
             if (urbotBluetoothService != null && mFaces.size() != 0) {
                 Iterator<Face> iterator = mFaces.iterator();
                 Face face;
@@ -181,8 +181,11 @@ public class CameraService extends Service {
                     face = iterator.next();
                     PointF facePosition = face.getPosition();
 
-                    Display display = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
-                    x += display.getWidth() - (facePosition.x + face.getWidth() / 2); // Because camera is mirrored
+                    Display display =
+                            ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
+
+                    // Because camera is mirrored
+                    x += display.getWidth() - (facePosition.x + face.getWidth() / 2);
                     y += facePosition.y + face.getHeight() / 2;
                 }
 
@@ -194,27 +197,25 @@ public class CameraService extends Service {
 
                 try {
                     if (movementNeeded.x > 0) {
-                        urbotBluetoothService.sendData("g");
-                    } else if (movementNeeded.x < 0) {
                         urbotBluetoothService.sendData("d");
-                    }
-
-                    if (movementNeeded.y > 0) {
-                        urbotBluetoothService.sendData("h");
-                    } else if (movementNeeded.y < 0) {
+                    } else if (movementNeeded.x < 0) {
+                        urbotBluetoothService.sendData("g");
+                    } else if (movementNeeded.y > 0) {
                         urbotBluetoothService.sendData("b");
+                    } else if (movementNeeded.y < 0) {
+                        urbotBluetoothService.sendData("h");
                     }
                 } catch (IOException e) {
                     Log.d(TAG, "IOException sending data", e);
                 }
             }
             }
-        }, 0, 1000);
+        }, 0, 500);
     }
 
     /**
      * Computes the movement needed to center the people on screen.
-     * There is a margin of 50 pixels around the center.
+     * There is a margin of 150 pixels around the center.
      * @param center The center of gravity
      * @return The movement needed in pixels, (0,0) if nothing is needed
      */
@@ -222,7 +223,7 @@ public class CameraService extends Service {
         Size size = mCameraSource.getPreviewSize();
 
         if (size != null && center.x != 0 && center.y != 0) {
-            int margin = 50;
+            int margin = 150;
             float w = size.getWidth() / 2;
             float h = size.getHeight() / 2;
             float movementLeft, movementTop;
@@ -283,14 +284,13 @@ public class CameraService extends Service {
     }
 
     /**
-     * Face tracker for each detected individual. This maintains a face graphic within the app's
-     * associated face overlay.
+     * Face tracker for each detected individual.
      */
     private class FaceTracker extends Tracker<Face> {
         private Face face;
 
         /**
-         * Start tracking the detected face instance within the face overlay.
+         * Start tracking the detected face instance.
          */
         @Override
         public void onNewItem(int faceId, Face item) {
@@ -299,7 +299,7 @@ public class CameraService extends Service {
         }
 
         /**
-         * Update the position/characteristics of the face within the overlay.
+         * Update the position/characteristics of the face within the list.
          */
         @Override
         public void onUpdate(FaceDetector.Detections<Face> detectionResults, Face face) {
@@ -318,8 +318,7 @@ public class CameraService extends Service {
         }
 
         /**
-         * Called when the face is assumed to be gone for good. Remove the graphic annotation from
-         * the overlay.
+         * Called when the face is assumed to be gone for good. Remove the face from the list.
          */
         @Override
         public void onDone() {

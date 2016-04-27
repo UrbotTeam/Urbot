@@ -13,6 +13,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
 
 public class UrbotActivity extends Activity {
     private static final String TAG = "CameraDebug";
@@ -21,6 +24,8 @@ public class UrbotActivity extends Activity {
     private boolean mBound;
     private final int mId = 42;
 
+    private Button mRefresh;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +33,23 @@ public class UrbotActivity extends Activity {
         setContentView(R.layout.urbot_main_layout);
 
         if(savedInstanceState == null) {
+            mRefresh = (Button) findViewById(R.id.refresh);
+            mRefresh.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(urbotBluetoothService != null && mCameraService != null) {
+                        urbotBluetoothService.closeBluetooth();
+                        urbotBluetoothService.turnOnBluetooth();
+                        urbotBluetoothService.startDiscovery();
+
+                        mCameraService.init(urbotBluetoothService);
+                        Toast.makeText(getApplicationContext(),
+                                "Restarting bluetooth", Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                }
+            });
+
             // Starts the bluetooth service
             Intent intent = new Intent(this, UrbotBluetoothService.class);
             bindService(intent, mBluetoothConnection, Context.BIND_AUTO_CREATE);
@@ -55,7 +77,11 @@ public class UrbotActivity extends Activity {
 
         //Register a receiver to stop Service
         registerReceiver(stopServiceReceiver, new IntentFilter("myFilter"));
-        PendingIntent contentIntent = PendingIntent.getBroadcast(this, 0, new Intent("myFilter"), PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent contentIntent = PendingIntent.getBroadcast(
+                this, 0,
+                new Intent("myFilter"),
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
 
         mBuilder.setContentIntent(contentIntent);
 

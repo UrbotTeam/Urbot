@@ -22,7 +22,9 @@ public class UrbotApplication extends Application {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
             // Device does not support Bluetooth
-            Toast.makeText(this.getApplicationContext(), "Device does not support bluetooth", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this.getApplicationContext(),
+                    "Device does not support bluetooth", Toast.LENGTH_SHORT)
+                    .show();
         } else {
             if (mBluetoothAdapter.isEnabled()) {
                 keepBluetooth = true;

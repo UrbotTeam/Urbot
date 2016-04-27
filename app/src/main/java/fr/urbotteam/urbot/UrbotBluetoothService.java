@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,6 +49,10 @@ public class UrbotBluetoothService extends Service {
 
                 if (device.getName() != null && device.getName().equals("CVBT_B")) {
                     Log.i(TAG, "Found arduino device");
+                    Toast.makeText(getApplicationContext(),
+                            "Connected via Bluetooth", Toast.LENGTH_SHORT)
+                            .show();
+
                     mDevice = device;
                     mBluetoothAdapter.cancelDiscovery();
 
@@ -150,7 +155,8 @@ public class UrbotBluetoothService extends Service {
      * @throws IOException
      */
     private void openConnexion() throws IOException {
-        UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"); //Standard SerialPortService ID
+        //Standard SerialPortService ID
+        UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
         mSocket = mDevice.createRfcommSocketToServiceRecord(uuid);
 
         try {
@@ -213,7 +219,7 @@ public class UrbotBluetoothService extends Service {
     }
 
     /**
-     * ocal binder to give access to public method to another activity
+     * Local binder to give access to public method to another activity
      */
     public class LocalBinder extends Binder {
         public UrbotBluetoothService getService() {
